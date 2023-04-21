@@ -12,11 +12,11 @@ import java.util.Objects;
 public class OrderProductPK implements Serializable {
 
     @JsonBackReference
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "order_id")
     private Order order;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "product_id")
     private Product product;
 
