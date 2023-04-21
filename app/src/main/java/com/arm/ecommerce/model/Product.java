@@ -1,24 +1,33 @@
-package com.arm.entity;
+package com.arm.ecommerce.model;
 
 
 import jakarta.persistence.*;
-import org.jetbrains.annotations.NotNull;
+import jakarta.validation.constraints.NotNull;
+
 @Entity
-@Table(name = "product")
 public class Product {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull("Product name is required.")
-    @Column
+    @NotNull(message = "Product name is required.")
+    @Basic(optional = false)
     private String name;
 
-    @Column
     private Double price;
 
-    @Column
     private String pictureUrl;
+
+    public Product(Long id, @NotNull(message = "Product name is required.") String name, Double price, String pictureUrl) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+        this.pictureUrl = pictureUrl;
+    }
+
+    public Product() {
+    }
 
     public Long getId() {
         return id;
@@ -49,15 +58,6 @@ public class Product {
     }
 
     public void setPictureUrl(String pictureUrl) {
-        this.pictureUrl = pictureUrl;
-    }
-public Product() {
-
-}
-    public Product(Long id, @NotNull("Product name is required.") String name, Double price, String pictureUrl) {
-        this.id = id;
-        this.name = name;
-        this.price = price;
         this.pictureUrl = pictureUrl;
     }
 }
