@@ -9,6 +9,14 @@ import {ProductsComponent} from './ecommerce/products/products.component';
 import {ShoppingCartComponent} from './ecommerce/shopping-cart/shopping-cart.component';
 import {OrdersComponent} from './ecommerce/orders/orders.component';
 import {EcommerceService} from "./ecommerce/services/EcommerceService";
+import {DisplayOrdersComponent} from "./ecommerce/display-orders/display-orders.component";
+import {RouterModule, Routes} from "@angular/router";
+import {NavbarComponent} from "./ecommerce/navbar/navbar.component";
+
+const routes: Routes = [
+    { path: '', component: EcommerceComponent },
+    { path: 'orders', component: DisplayOrdersComponent }
+];
 
 @NgModule({
     declarations: [
@@ -16,16 +24,23 @@ import {EcommerceService} from "./ecommerce/services/EcommerceService";
         EcommerceComponent,
         ProductsComponent,
         ShoppingCartComponent,
-        OrdersComponent
+        OrdersComponent,
+        DisplayOrdersComponent,
+        NavbarComponent
     ],
     imports: [
         BrowserModule,
         HttpClientModule,
         FormsModule,
-        ReactiveFormsModule
+        ReactiveFormsModule,
+        RouterModule.forRoot(routes)
+    ],
+    exports: [
+        RouterModule
     ],
     providers: [EcommerceService],
     bootstrap: [AppComponent]
 })
 export class AppModule {
 }
+

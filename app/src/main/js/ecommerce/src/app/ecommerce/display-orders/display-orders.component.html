@@ -1,0 +1,10 @@
+<navbar></navbar>
+<h1>Your orders</h1>
+<div class="row card-deck">
+    <div class="card col-lg-4 col-md-6 mb-4" *ngFor="let order of orders">
+        Total Price - {{order.totalOrderPrice}}
+        <ul *ngFor="let op of order.orderProducts">
+            <li>{{op.product.name}} - {{op.quantity}}</li>
+        </ul>
+    </div>
+</div>
