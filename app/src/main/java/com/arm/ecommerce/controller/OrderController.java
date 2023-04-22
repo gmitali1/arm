@@ -1,5 +1,6 @@
 package com.arm.ecommerce.controller;
 
+import com.arm.coordinator.model.OrderForm;
 import com.arm.ecommerce.dto.OrderProductDto;
 import com.arm.ecommerce.exception.ResourceNotFoundException;
 import com.arm.ecommerce.model.Order;
@@ -84,16 +85,4 @@ public class OrderController {
         }
     }
 
-    public static class OrderForm {
-
-        private List<OrderProductDto> productOrders;
-
-        public List<OrderProductDto> getProductOrders() {
-            return productOrders;
-        }
-
-        public void setProductOrders(List<OrderProductDto> productOrders) {
-            this.productOrders = productOrders;
-        }
-    }
 }

@@ -1,6 +1,7 @@
 package com.arm.ecommerce.model;
 
 import com.arm.ecommerce.common.*;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -68,19 +69,13 @@ public class Server extends UnicastRemoteObject implements KeyValueServer {
     }
 
     public void registerServerWithCoordinator() {
-            RestTemplate restTemplate = new RestTemplate();
-            String uri = "http://"+coordinatorHostName+":"+coordinatorPort+"/api/register-server?hostName="
-                    +hostName+"&&port="+port;
-            HttpHeaders headers = new HttpHeaders();
-            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-            headers.add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
-
-            HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
-            ResponseEntity<?> result =
-                    restTemplate.exchange(uri, HttpMethod.GET, entity, Object.class);
+            RestTemplate restTemplate = new RestTemplateBuilder().build();
+            String uri = "http://" +coordinatorHostName+":"+coordinatorPort+"/api/coordinator/register-server?hostName="+hostName+"&&port="+port;
+            ResponseEntity<String> result = restTemplate.getForEntity(uri, String.class);
             System.out.println(result.getBody());
-            System.out.println("Registered server with coordinator");
+            if (result.getStatusCode().is2xxSuccessful()) {
+                serverLogger.info("Registered server with coordinator");
+            }
     }
 
     @Override

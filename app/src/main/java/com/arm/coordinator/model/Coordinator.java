@@ -15,7 +15,7 @@ import java.util.logging.Logger;
  *
  * @author mitali ghotgalkar
  */
-public class Coordinator extends UnicastRemoteObject implements CoordinatorInterface {
+public class Coordinator implements CoordinatorInterface {
 
     private final Set<Map.Entry<String, Integer>> servers;
 
@@ -26,12 +26,12 @@ public class Coordinator extends UnicastRemoteObject implements CoordinatorInter
      *
      * @throws RemoteException
      */
-    public Coordinator() throws RemoteException {
+    public Coordinator() {
         this.servers = new HashSet<>();
         this.coordinatorLogger = Logger.getLogger("Coordinator Logger");
     }
 
-    private synchronized Result execute(Proposal proposal) throws RemoteException {
+    private synchronized Result execute(Proposal proposal) {
         List<KeyValueServer> acceptors = new ArrayList<>();
 
         for (Map.Entry<String, Integer> server : this.servers) {
@@ -147,14 +147,14 @@ public class Coordinator extends UnicastRemoteObject implements CoordinatorInter
     }
 
     @Override
-    public Result get(String key) throws RemoteException {
+    public Result get(String key) {
         KeyValueOperation operation = new KeyValueOperation(OperationType.GET, key, null);
         Proposal proposal = Proposal.generateProposal(operation);
         return execute(proposal);
     }
 
     @Override
-    public void addAcceptor(String hostName, int port) throws RemoteException {
+    public void addAcceptor(String hostName, int port) {
         coordinatorLogger.info("New acceptor got added at - " + hostName + ":" + port);
         coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
         this.servers.add(Map.entry(hostName, port));

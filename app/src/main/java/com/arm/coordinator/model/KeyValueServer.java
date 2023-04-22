@@ -12,7 +12,7 @@ import java.util.Map;
  *
  * @author mitali ghotgalkar
  */
-public interface KeyValueServer extends Remote {
+public interface KeyValueServer {
 
     /**
      * The promise phase is the first phase of the PAXOS protocol that is executed when a proposer wants to propose
@@ -22,7 +22,7 @@ public interface KeyValueServer extends Remote {
      * @return Promise object
      * @throws RemoteException
      */
-    Promise promise(Proposal proposal) throws RemoteException;
+    Promise promise(Proposal proposal);
 
     /**
      * During accept, the coordinator sends accept message to all servers with the proposed value
@@ -31,7 +31,7 @@ public interface KeyValueServer extends Remote {
      * @return accepted or not. (true/false).
      * @throws RemoteException
      */
-    Boolean accept(Proposal proposal) throws RemoteException;
+    Boolean accept(Proposal proposal);
 
     /**
      * During learn, the coordinator asks all servers to commit to the chosen value.
@@ -40,7 +40,7 @@ public interface KeyValueServer extends Remote {
      * @return Result of learn phase (final phase).
      * @throws RemoteException
      */
-    Result learn(Proposal proposal) throws RemoteException;
+    Result learn(Proposal proposal);
 
     /**
      * gets the failure percentage of promise
@@ -48,7 +48,7 @@ public interface KeyValueServer extends Remote {
      * @return failure promise percentage.
      * @throws RemoteException
      */
-    double getPromisePercentage() throws RemoteException;
+    double getPromisePercentage();
 
     /**
      * gets the failure percentage of accept
@@ -56,7 +56,7 @@ public interface KeyValueServer extends Remote {
      * @return failure accept percentage.
      * @throws RemoteException
      */
-    double getAcceptPercentage() throws RemoteException;
+    double getAcceptPercentage();
 
     /**
      * gets the failure percentage of learn
@@ -64,7 +64,7 @@ public interface KeyValueServer extends Remote {
      * @return failure learn percentage.
      * @throws RemoteException
      */
-    double getLearnPercentage() throws RemoteException;
+    double getLearnPercentage();
 
     /**
      * get port of the server.
@@ -72,7 +72,7 @@ public interface KeyValueServer extends Remote {
      * @return port
      * @throws RemoteException
      */
-    int getPort() throws RemoteException;
+    int getPort();
 
     /**
      * Creates a copy hashmap of key value pairs
@@ -80,7 +80,7 @@ public interface KeyValueServer extends Remote {
      * @return copy hashmap of key value pairs.
      * @throws RemoteException
      */
-    Map<String, String> copyKeyValueStore() throws RemoteException;
+    Map<String, String> copyKeyValueStore();
 
 
 }

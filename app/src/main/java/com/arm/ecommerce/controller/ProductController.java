@@ -30,6 +30,6 @@ public class ProductController {
         return ResponseEntity.ok("population complete");
     }
 
-    @GetMapping(value = { "", "/" })
+    @GetMapping
     public @NotNull Iterable<Product> getProducts() { return productService.getAllProducts(); }
 }
