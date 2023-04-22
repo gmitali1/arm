@@ -2,6 +2,7 @@ import {Component, OnInit, ViewChild} from '@angular/core';
 import {ProductsComponent} from "./products/products.component";
 import {ShoppingCartComponent} from "./shopping-cart/shopping-cart.component";
 import {OrdersComponent} from "./orders/orders.component";
+import {DisplayOrdersComponent} from "./display-orders/display-orders.component";
 
 @Component({
     selector: 'app-ecommerce',
@@ -9,7 +10,6 @@ import {OrdersComponent} from "./orders/orders.component";
     styleUrls: ['./ecommerce.component.css']
 })
 export class EcommerceComponent implements OnInit {
-    private collapsed = true;
     orderFinished = false;
 
     @ViewChild('productsC')
@@ -21,28 +21,18 @@ export class EcommerceComponent implements OnInit {
     @ViewChild('ordersC')
     ordersC: OrdersComponent;
 
+    @ViewChild('displayOrdersC')
+    displayOrdersC: DisplayOrdersComponent;
+
     constructor() {
     }
 
     ngOnInit() {
     }
 
-    toggleCollapsed(): void {
-        this.collapsed = !this.collapsed;
-    }
 
     finishOrder(orderFinished: boolean) {
         this.orderFinished = orderFinished;
     }
 
-    reset() {
-        this.orderFinished = false;
-        this.productsC.reset();
-        this.shoppingCartC.reset();
-        this.ordersC.paid = false;
-    }
-
-    navigateToOrders() {
-
-    }
 }

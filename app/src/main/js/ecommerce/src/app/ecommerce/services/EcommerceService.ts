@@ -26,7 +26,12 @@ export class EcommerceService {
     }
 
     getAllProducts() {
+        console.log("got products");
         return this.http.get(this.productsUrl);
+    }
+
+    getAllOrders() {
+        return this.http.get(this.ordersUrl);
     }
 
     saveOrder(order: ProductOrders) {
