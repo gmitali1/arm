@@ -11,4 +11,6 @@ public enum ResultCodeEnum {
 
     KEY_NOT_FOUND,
 
+    ALL_OKAY
+
 }

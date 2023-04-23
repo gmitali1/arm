@@ -1,6 +1,7 @@
 package com.arm.coordinator.model;
 
-import java.rmi.Remote;
+import com.arm.coordinator.common.Result;
+
 import java.rmi.RemoteException;
 
 /**
@@ -19,7 +20,10 @@ public interface CoordinatorInterface {
      */
     void addAcceptor(String hostName, int port);
 
-    public Result get(String key);
+    Result getAllOrders();
 
+    Result getAllProducts();
+
+    Result createOrder(OrderForm orderForm);
 }
 

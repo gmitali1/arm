@@ -5,7 +5,11 @@ package com.arm.coordinator.common;
  * @author mitali ghotgalkar
  */
 public enum OperationType {
-    DELETE,
-    PUT,
-    GET
+    CREATE_ORDER,
+
+    GET_ORDERS,
+
+    CREATE_PRODUCT,
+
+    GET_PRODUCTS
 }

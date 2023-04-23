@@ -1,5 +1,7 @@
 package com.arm.coordinator.common;
 
+import com.arm.ecommerce.model.Order;
+import com.arm.ecommerce.model.Product;
 
 import java.io.Serializable;
 
@@ -9,79 +11,64 @@ import java.io.Serializable;
  * @author mitali ghotgalkar
  */
 public class Result implements Serializable {
-    public static final long serialVersionUID = 1L;
-    private boolean ok;
+
+    private Boolean ok;
     private String message;
     private ResultCodeEnum resultCodeEnum;
 
-    private Result() {
-    }
+    private Iterable<Order> orders;
 
-    /**
-     * returns result with ok status.
-     *
-     * @return Result for normal/positive execution.
-     */
-    public static Result ok() {
-        Result result = new Result();
-        result.ok = true;
-        return result;
-    }
+    private Iterable<Product> products;
 
-    /**
-     * sets the message of the result.
-     *
-     * @param message to be set.
-     * @return Result with the message.
-     */
-    public Result message(String message) {
+    public Result() {}
+
+    public Result(Boolean ok, String message, ResultCodeEnum resultCodeEnum, Iterable<Order> orders,
+                  Iterable<Product> products) {
+        this.ok = ok;
         this.message = message;
-        return this;
+        this.resultCodeEnum = resultCodeEnum;
+        this.orders = orders;
+        this.products = products;
     }
 
-    /**
-     * sets the result code enum of the result
-     *
-     * @param resultCodeEnum to be set.
-     * @return Result with the result code enum set.
-     */
-    public static Result setResult(ResultCodeEnum resultCodeEnum) {
-        Result result = new Result();
-        result.resultCodeEnum = resultCodeEnum;
-        return result;
-    }
-
-    /**
-     * returns if the Result is ok or not.
-     *
-     * @return true/false.
-     */
-    public boolean isOk() {
+    public Boolean isOk() {
         return ok;
     }
 
-    /**
-     * gets the message of the result object.
-     *
-     * @return message in string.
-     */
+    public void setOk(Boolean ok) {
+        this.ok = ok;
+    }
+
     public String getMessage() {
         return message;
     }
 
-    /**
-     * gets the result code enum for this result object.
-     *
-     * @return ResultCodeEnum
-     */
-    public ResultCodeEnum getResult() {
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public ResultCodeEnum getResultCodeEnum() {
         return resultCodeEnum;
     }
 
-    @Override
-    public String toString() {
-        return "Result : ok = " + ok + ", message='" + message + ", resultCodeEnum=" + resultCodeEnum;
+    public void setResultCodeEnum(ResultCodeEnum resultCodeEnum) {
+        this.resultCodeEnum = resultCodeEnum;
+    }
+
+    public Iterable<Order> getOrders() {
+        return orders;
+    }
+
+    public void setOrders(Iterable<Order> orders) {
+        this.orders = orders;
+    }
+
+    public Iterable<Product> getProducts() {
+        return products;
+    }
+
+    public void setProducts(Iterable<Product> products) {
+        this.products = products;
     }
 
 }
-

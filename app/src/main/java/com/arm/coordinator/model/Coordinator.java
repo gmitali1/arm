@@ -1,9 +1,11 @@
 package com.arm.coordinator.model;
 import com.arm.coordinator.common.*;
+import com.arm.ecommerce.model.Order;
+import com.arm.ecommerce.model.Product;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
-import java.rmi.Naming;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Logger;
@@ -19,28 +21,33 @@ public class Coordinator implements CoordinatorInterface {
 
     private final Set<Map.Entry<String, Integer>> servers;
 
-    private final Logger coordinatorLogger;
+    private final Logger coordinatorLogger = Logger.getLogger(this.getClass().getSimpleName());
+
+    private final RestTemplate restTemplate;
 
     /**
      * Constructor to create coordinator with a set of servers.
-     *
-     * @throws RemoteException
      */
     public Coordinator() {
         this.servers = new HashSet<>();
-        this.coordinatorLogger = Logger.getLogger("Coordinator Logger");
+        restTemplate = new RestTemplateBuilder().build();
     }
 
     private synchronized Result execute(Proposal proposal) {
-        List<KeyValueServer> acceptors = new ArrayList<>();
+        List<EcommerceServer> acceptors = new ArrayList<>();
 
         for (Map.Entry<String, Integer> server : this.servers) {
             try {
-                KeyValueServer acceptor = (KeyValueServer) Naming.lookup("rmi://" + server.getKey() +
-                        ":" + server.getValue() + "/" + StringLiterals.KEYVALUESTORE.getLiteral());
-                acceptors.add(acceptor);
+                String url = "http://"+server.getKey()+":"+server.getValue()+"/api/server";
+                ResponseEntity<String> serverResponse = restTemplate.getForEntity(url, String.class);
+                if (serverResponse.getStatusCode().is2xxSuccessful()) {
+                    this.coordinatorLogger.info(String.format("Server at port %d Responded", server.getValue()));
+                    acceptors.add(new EcommerceServer(server.getKey(), server.getValue()));
+                } else {
+                    this.coordinatorLogger.warning(String.format("Server at port %d down", server.getValue()));
+                }
             } catch (Exception e) {
-                this.coordinatorLogger.warning(String.format("Warning : Server at port %d down", server.getValue()));
+                this.coordinatorLogger.warning(String.format("Exception while trying to reach Server at port %d", server.getValue()));
                 continue;
             }
         }
@@ -48,107 +55,199 @@ public class Coordinator implements CoordinatorInterface {
         int half = Math.floorDiv(acceptors.size(), 2) + 1;
         int promised = 0;
 
-        //for get operation, it checks for GET values of all servers and accordingly returns results.
-        if (proposal.getOperation().getOperationType().equals(OperationType.GET)) {
-            Map<String, Integer> valueMap = new HashMap<>();
-            for (int i = 0; i < acceptors.size(); i++) {
-                KeyValueServer server = acceptors.get(i);
-                String answer;
-                answer = server.copyKeyValueStore()
-                        .getOrDefault(proposal.getOperation().getKey(), null);
-                if (answer != null) {
-                    valueMap.put(answer,
-                            valueMap.getOrDefault(answer, 0) + 1);
+        switch (proposal.getOperation().getOperationType()) {
+            case GET_ORDERS -> {
+                Map<Iterable<Order>, Integer> valueMap = new HashMap<>();
+                for (EcommerceServer acceptor : acceptors) {
+                    String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders";
+                    Iterable<Order> orders = restTemplate.getForObject(url, Iterable.class);
+                    if (orders != null) {
+                        coordinatorLogger.info("Response received from - "
+                                + acceptor.getHostname() + ":" + acceptor.getPort());
+                        valueMap.put(orders,
+                                valueMap.getOrDefault(orders, 0) + 1);
+                    }
                 }
+
+                for (Iterable<Order> value : valueMap.keySet()) {
+                    if (valueMap.get(value) >= half) {
+                        Result result = new Result();
+                        result.setOk(true);
+                        result.setMessage("Orders retrieved from distributed servers: " + value);
+                        result.setOrders(value);
+                        return result;
+                    }
+                }
+
+                Result result = new Result();
+                result.setResultCodeEnum(ResultCodeEnum.KEY_NOT_FOUND);
+                result.setMessage(Response.ERROR.getMessage());
+                return result;
             }
 
-            for (Iterator<String> iterator = valueMap.keySet().iterator(); iterator.hasNext(); ) {
-                String value = iterator.next();
-                if (valueMap.get(value) > servers.size() / 2) {
-                    return Result.ok().message("Value from server is " + value);
+            case GET_PRODUCTS -> {
+                Map<Iterable<Product>, Integer> valueMap = new HashMap<>();
+                for (EcommerceServer acceptor : acceptors) {
+                    String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/products";
+                    Iterable<Product> products = restTemplate.getForObject(url, Iterable.class);
+                    if (products != null) {
+                        coordinatorLogger.info("Response received from - "
+                                + acceptor.getHostname() + ":" + acceptor.getPort());
+                        valueMap.put(products,
+                                valueMap.getOrDefault(products, 0) + 1);
+                    }
                 }
+
+                for (Iterable<Product> value : valueMap.keySet()) {
+                    if (valueMap.get(value) >= half) {
+                        Result result = new Result();
+                        result.setOk(true);
+                        result.setMessage("Products retrieved from distributed servers: " + value);
+                        result.setProducts(value);
+                        return result;
+                    }
+                }
+                Result result = new Result();
+                result.setResultCodeEnum(ResultCodeEnum.KEY_NOT_FOUND);
+                result.setMessage(Response.ERROR.getMessage());
+                return result;
             }
 
-            return Result.setResult(ResultCodeEnum.KEY_NOT_FOUND).message(Response.ERROR.getMessage());
-        }
+            case CREATE_ORDER -> {
+                // Phase 1: Send the Promises
+                for (EcommerceServer acceptor : acceptors) {
+                    try {
+                        String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders/promise";
+                        ResponseEntity<Promise> promiseResponseEntity = restTemplate.postForEntity(url, proposal, Promise.class);
+                        Promise promise = null;
+                        if (promiseResponseEntity.getStatusCode().is2xxSuccessful()) {
+                            promise = promiseResponseEntity.getBody();
+                        }
 
-        // Phase 1: Send the Promises
-        for (KeyValueServer acceptor : acceptors) {
-            try {
-                Promise promise = acceptor.promise(proposal);
+                        if (promise == null) {
+                            this.coordinatorLogger.info(String.format("Server at Port %d NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
+                            this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
+                        } else if (promise.getStatus()== Status.PROMISED || promise.getStatus() == Status.ACCEPTED) {
+                            promised++;
+                            this.coordinatorLogger.info(String.format("Server at port %d PROMISED proposal %d", acceptor.getPort(), proposal.getId()));
+                            this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
+                        } else {
+                            this.coordinatorLogger.info(String.format("Server at port %d REJECTED proposal %d", acceptor.getPort(), proposal.getId()));
+                            this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
+                        }
+                    } catch (Exception e) {
+                        this.coordinatorLogger.warning(String.format("Server at port %d DID NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
+                        continue;
+                    }
+                }
 
-                if (promise == null) {
-                    this.coordinatorLogger.info(String.format("Server at Port %d NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
-                    this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
-                } else if (promise.getStatus() == Status.PROMISED || promise.getStatus() == Status.ACCEPTED) {
-                    promised++;
-                    this.coordinatorLogger.info(String.format("Server at port %d PROMISED proposal %d", acceptor.getPort(), proposal.getId()));
-                    this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
+                // Phase 2 - Send the "accept" message
+                if (promised < half) {
+                    Result result = new Result();
+                    result.setResultCodeEnum(ResultCodeEnum.CONSENSUS_NOT_REACHED);
+                    result.setMessage("Consensus not reached");
+                    return result;
                 } else {
-                    this.coordinatorLogger.info(String.format("Server at port %d REJECTED proposal %d", acceptor.getPort(), proposal.getId()));
-                    this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
-                }
-            } catch (Exception e) {
-                this.coordinatorLogger.warning(String.format("Server at port %d DID NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
-                continue;
-            }
-        }
-
-        // Phase 2 - Send the "accept" message
-        if (promised < half) {
-            return Result.setResult(ResultCodeEnum.CONSENSUS_NOT_REACHED).message("Consensus not reached");
-        }
-
-        int accepted = 0;
-        for (KeyValueServer acceptor : acceptors) {
-            try {
-                Boolean isAccepted = acceptor.accept(proposal);
-
-                if (isAccepted == null) {
-                    this.coordinatorLogger.warning(String.format("Server at port %d DID NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
-                    this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
-                } else if (isAccepted) {
-                    accepted++;
-                    this.coordinatorLogger.info(String.format("Server at port %d ACCEPTED proposal %d", acceptor.getPort(), proposal.getId()));
-                    this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
-                }
-            } catch (Exception e) {
-                this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
-                this.coordinatorLogger.warning(String.format("Server at port %d DID NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
-            }
-        }
-
-        if (accepted < half) {
-            return Result.setResult(ResultCodeEnum.CONSENSUS_NOT_REACHED).message("Cannot reach consensus");
-        }
-
-        // Phase 3 - Send the "learn" message (this is extra credit)
-        int learnt = 0;
-        Result executionResult = null;
-        for (KeyValueServer acceptor : acceptors) {
-            try {
-                Result result = acceptor.learn(proposal);
-                if (result.isOk()) {
-                    learnt++;
-                    executionResult = result;
+                    coordinatorLogger.info("Promise Phase successfully completed.");
                 }
 
-            } catch (Exception e) {
-                coordinatorLogger.info("exception in learn phase");
-                coordinatorLogger.info(e.getLocalizedMessage());
+                int accepted = 0;
+                for (EcommerceServer acceptor : acceptors) {
+                    try {
+                        Boolean isAccepted = false;
+                        String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders/accept";
+                        ResponseEntity<Boolean> acceptResponseEntity = restTemplate.postForEntity(url, proposal, Boolean.class);
+                        if (acceptResponseEntity.getStatusCode().is2xxSuccessful()) {
+                            isAccepted = acceptResponseEntity.getBody();
+                        }
+
+                        if (isAccepted == null) {
+                            this.coordinatorLogger.warning(String.format("Server at port %d DID NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
+                            this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
+                        } else if (isAccepted) {
+                            accepted++;
+                            this.coordinatorLogger.info(String.format("Server at port %d ACCEPTED proposal %d", acceptor.getPort(), proposal.getId()));
+                            this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
+                        }
+                    } catch (Exception e) {
+                        this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
+                        this.coordinatorLogger.warning(String.format("Server at port %d DID NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
+                    }
+                }
+
+                if (accepted < half) {
+                    Result result = new Result();
+                    result.setResultCodeEnum(ResultCodeEnum.CONSENSUS_NOT_REACHED);
+                    result.setMessage("Cannot reach consensus");
+                    return result;
+                } else {
+                    coordinatorLogger.info("Accept Phase successfully completed.");
+                }
+
+                // Phase 3 - Send the "learn" message (this is extra credit)
+                int learnt = 0;
+                Result executionResult = null;
+                for (EcommerceServer acceptor : acceptors) {
+                    try {
+                        Result result = null;
+                        String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders/learn";
+                        ResponseEntity<Object> resultResponseEntity = restTemplate.postForEntity(url, proposal, Object.class);
+                        if (resultResponseEntity.getStatusCode().is2xxSuccessful()) {
+                            result = new Result();
+                            result.setOk(true);
+//                            result.setOrder(resultResponseEntity.getBody());
+                        }
+
+                        if (result != null && result.isOk()) {
+                            learnt++;
+                            executionResult = result;
+                        }
+
+                    } catch (Exception e) {
+                        coordinatorLogger.info("exception in learn phase");
+                        coordinatorLogger.info(e.getLocalizedMessage());
+                    }
+                }
+
+                if (learnt < half) {
+                    Result result = new Result();
+                    result.setResultCodeEnum(ResultCodeEnum.CONSENSUS_NOT_REACHED);
+                    result.setMessage("Cannot reach consensus");
+                    return result;
+                } else {
+                    coordinatorLogger.info("Learn Phase successfully completed.");
+                }
+
+                return executionResult;
+
             }
+
+            case CREATE_PRODUCT -> {
+
+            }
+
         }
 
-        if (learnt < half) {
-            return Result.setResult(ResultCodeEnum.CONSENSUS_NOT_REACHED).message("Cannot reach consensus");
-        }
-
-        return executionResult;
+        return null;
     }
 
     @Override
-    public Result get(String key) {
-        KeyValueOperation operation = new KeyValueOperation(OperationType.GET, key, null);
+    public Result getAllOrders() {
+        EcommerceOperation operation = new EcommerceOperation(OperationType.GET_ORDERS, null);
+        Proposal proposal = Proposal.generateProposal(operation);
+        return execute(proposal);
+    }
+
+    @Override
+    public Result createOrder(OrderForm orderForm) {
+        EcommerceOperation operation = new EcommerceOperation(OperationType.CREATE_ORDER, orderForm);
+        Proposal proposal = Proposal.generateProposal(operation);
+        return execute(proposal);
+    }
+
+    @Override
+    public Result getAllProducts() {
+        EcommerceOperation operation = new EcommerceOperation(OperationType.GET_PRODUCTS, null);
         Proposal proposal = Proposal.generateProposal(operation);
         return execute(proposal);
     }
@@ -164,6 +263,26 @@ public class Coordinator implements CoordinatorInterface {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMM dd,yyyy HH:mm:ss:SS");
         Date date = new Date(currentTimeMillis);
         return simpleDateFormat.format(date);
+    }
+
+    private static class EcommerceServer {
+
+        private final String hostname;
+        private final int port;
+
+        public EcommerceServer(String hostname, int port) {
+            this.hostname = hostname;
+            this.port = port;
+        }
+
+        public int getPort() {
+            return port;
+        }
+
+        public String getHostname() {
+            return hostname;
+        }
+
     }
 }
 

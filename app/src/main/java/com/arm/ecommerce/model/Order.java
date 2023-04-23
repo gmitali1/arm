@@ -5,10 +5,10 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
 
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "orders")
@@ -27,6 +27,10 @@ public class Order {
     @OneToMany(mappedBy = "pk.order")
     @Valid
     private List<OrderProduct> orderProducts = new ArrayList<>();
+
+    public Order() {
+
+    }
 
     @Transient
     public Double getTotalOrderPrice() {
@@ -73,5 +77,18 @@ public class Order {
 
     public void setOrderProducts(List<OrderProduct> orderProducts) {
         this.orderProducts = orderProducts;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Order order = (Order) o;
+        return Objects.equals(id, order.id) && Objects.equals(dateCreated, order.dateCreated) && Objects.equals(status, order.status);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, dateCreated, status);
     }
 }

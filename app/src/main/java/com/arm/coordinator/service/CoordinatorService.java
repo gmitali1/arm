@@ -1,5 +1,6 @@
 package com.arm.coordinator.service;
 
+import com.arm.coordinator.common.Result;
 import com.arm.coordinator.model.Coordinator;
 import com.arm.coordinator.model.CoordinatorInterface;
 import com.arm.coordinator.model.OrderForm;
@@ -27,19 +28,31 @@ public class CoordinatorService {
 
     public Iterable<Order> getAllOrders() {
         // Do API Call for get all Orders and return all the orders
-        String url = "http://localhost:9090/api/orders";
-        return restTemplate.getForObject(url, Iterable.class);
+        Result ordersResult = coordinatorInterface.getAllOrders();
+        if (ordersResult.isOk()) {
+            return ordersResult.getOrders();
+        } else {
+            throw new IllegalStateException("Unable to get products: " + ordersResult.getMessage());
+        }
     }
 
     public ResponseEntity<Order> createOrder(OrderForm form) {
         // Execute create Order in the coordinator interface
-        return null;
+        Result result = coordinatorInterface.createOrder(form);
+        if (result.isOk()) {
+            return ResponseEntity.ok(new Order());
+        }
+        throw new IllegalStateException("Error Creating Order");
     }
 
 
     public Iterable<Product> getAllProducts() {
         // Execute Get Operation for all products on all servers
-        String url = "http://localhost:9090/api/products";
-        return restTemplate.getForObject(url, Iterable.class);
+        Result productResult = coordinatorInterface.getAllProducts();
+        if (productResult.isOk()) {
+            return productResult.getProducts();
+        } else {
+            throw new IllegalStateException("Unable to get products: " + productResult.getMessage());
+        }
     }
 }
