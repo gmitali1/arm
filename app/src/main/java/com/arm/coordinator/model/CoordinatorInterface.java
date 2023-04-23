@@ -16,7 +16,6 @@ public interface CoordinatorInterface {
      *
      * @param hostName of the acceptor
      * @param port     of the acceptor
-     * @throws RemoteException
      */
     void addAcceptor(String hostName, int port);
 
