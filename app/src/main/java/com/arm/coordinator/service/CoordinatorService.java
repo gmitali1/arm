@@ -11,15 +11,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 @Service
 public class CoordinatorService {
 
     CoordinatorInterface coordinatorInterface;
     RestTemplate restTemplate;
 
+    private AtomicLong orderId;
+
     public CoordinatorService() {
         coordinatorInterface = new Coordinator();
         restTemplate = new RestTemplateBuilder().build();
+        orderId = new AtomicLong(1L);
     }
 
     public void addAcceptor(String hostName, int port) {
@@ -36,8 +41,9 @@ public class CoordinatorService {
         }
     }
 
-    public ResponseEntity<Order> createOrder(OrderForm form) {
+    public synchronized ResponseEntity<Order> createOrder(OrderForm form) {
         // Execute create Order in the coordinator interface
+        form.setOrderId(orderId.getAndIncrement());
         Result result = coordinatorInterface.createOrder(form);
         if (result.isOk()) {
             return ResponseEntity.ok(new Order());
