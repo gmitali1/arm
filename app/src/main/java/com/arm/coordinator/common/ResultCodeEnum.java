@@ -1,4 +1,4 @@
-package com.arm.ecommerce.common;
+package com.arm.coordinator.common;
 
 /**
  * Enum for distinguishing results that are returned.
@@ -10,5 +10,7 @@ public enum ResultCodeEnum {
     CONSENSUS_NOT_REACHED,
 
     KEY_NOT_FOUND,
+
+    ALL_OKAY
 
 }

@@ -1,11 +1,15 @@
-package com.arm.ecommerce.common;
+package com.arm.coordinator.common;
 
 /**
  * Enum for operation type of key value store
  * @author mitali ghotgalkar
  */
 public enum OperationType {
-    DELETE,
-    PUT,
-    GET
+    CREATE_ORDER,
+
+    GET_ORDERS,
+
+    CREATE_PRODUCT,
+
+    GET_PRODUCTS
 }

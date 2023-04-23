@@ -1,16 +1,15 @@
 package com.arm.coordinator.common;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * The Coordinator sends a Proposal to multiple servers to perform a write operation.
  *
  * @author mitali ghotgalkar
  */
-public class Proposal implements Serializable {
-    public static final long serialVersionUID = 1L;
+public class Proposal {
     private long id;
-    private KeyValueOperation operation;
+    private EcommerceOperation operation;
 
     /**
      * Constructor for creating a Proposal with id and Key Value operation.
@@ -18,9 +17,13 @@ public class Proposal implements Serializable {
      * @param id        id of the proposal.
      * @param operation operation that is proposed to the server.
      */
-    public Proposal(long id, KeyValueOperation operation) {
+    public Proposal(long id, EcommerceOperation operation) {
         this.id = id;
         this.operation = operation;
+    }
+
+    public Proposal() {
+
     }
 
     /**
@@ -37,7 +40,7 @@ public class Proposal implements Serializable {
      *
      * @return operation
      */
-    public KeyValueOperation getOperation() {
+    public EcommerceOperation getOperation() {
         return operation;
     }
 
@@ -55,19 +58,20 @@ public class Proposal implements Serializable {
      *
      * @param operation to be set.
      */
-    public void setOperation(KeyValueOperation operation) {
+    public void setOperation(EcommerceOperation operation) {
         this.operation = operation;
     }
 
     /**
      * creates a new proposal with the key value operation passed to it.
      *
-     * @param keyValueOperation
+     * @param ecommerceOperation
      * @return the created proposal.
      */
-    public static synchronized Proposal generateProposal(KeyValueOperation keyValueOperation) {
+    @JsonIgnore
+    public static synchronized Proposal generateProposal(EcommerceOperation ecommerceOperation) {
         //String s = new SimpleDateFormat("HHmmssSSS").format(new Date());
-        Proposal proposal = new Proposal(System.currentTimeMillis(), keyValueOperation);
+        Proposal proposal = new Proposal(System.currentTimeMillis(), ecommerceOperation);
         try {
             Thread.sleep(1);
         } catch (InterruptedException e) {

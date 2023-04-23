@@ -1,6 +1,7 @@
 package com.arm.coordinator.model;
 
-import java.rmi.Remote;
+import com.arm.coordinator.common.Result;
+
 import java.rmi.RemoteException;
 
 /**
@@ -8,7 +9,7 @@ import java.rmi.RemoteException;
  *
  * @author mitali ghotgalkar.
  */
-public interface CoordinatorInterface extends Remote {
+public interface CoordinatorInterface {
 
     /**
      * adds an acceptor with the provided hostname and port.
@@ -17,9 +18,12 @@ public interface CoordinatorInterface extends Remote {
      * @param port     of the acceptor
      * @throws RemoteException
      */
-    void addAcceptor(String hostName, int port) throws RemoteException;
+    void addAcceptor(String hostName, int port);
 
-    public Result get(String key) throws RemoteException;
+    Result getAllOrders();
 
+    Result getAllProducts();
+
+    Result createOrder(OrderForm orderForm);
 }
 

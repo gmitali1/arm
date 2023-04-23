@@ -1,5 +1,6 @@
 package com.arm.coordinator.common;
 
+
 import java.io.Serializable;
 
 /**
@@ -8,13 +9,16 @@ import java.io.Serializable;
  *
  * @author mitali ghotgalkar
  */
+
 public class Promise implements Serializable {
 
-    public static final long serialVersionUID = 1L;
+    private Status status;
 
-    private final Status status;
+    private Proposal proposal;
 
-    private final Proposal proposal;
+    public Promise() {
+
+    }
 
     /**
      * Used to create a Promise instance
@@ -45,4 +49,11 @@ public class Promise implements Serializable {
         return status;
     }
 
+    public void setProposal(Proposal proposal) {
+        this.proposal = proposal;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
 }
