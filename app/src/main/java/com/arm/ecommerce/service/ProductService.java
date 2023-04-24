@@ -14,7 +14,4 @@ public interface ProductService {
 
     Product save(Product product);
 
-    Product findById(long id);
-
-    void populateProducts();
 }

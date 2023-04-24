@@ -1,12 +1,14 @@
 package com.arm.coordinator.model;
+
 import com.arm.coordinator.common.*;
 import com.arm.ecommerce.model.Order;
 import com.arm.ecommerce.model.Product;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -36,199 +38,27 @@ public class Coordinator implements CoordinatorInterface {
     private synchronized Result execute(Proposal proposal) {
         List<EcommerceServer> acceptors = new ArrayList<>();
 
-        for (Map.Entry<String, Integer> server : this.servers) {
-            try {
-                String url = "http://"+server.getKey()+":"+server.getValue()+"/api/server";
-                ResponseEntity<String> serverResponse = restTemplate.getForEntity(url, String.class);
-                if (serverResponse.getStatusCode().is2xxSuccessful()) {
-                    this.coordinatorLogger.info(String.format("Server at port %d Responded", server.getValue()));
-                    acceptors.add(new EcommerceServer(server.getKey(), server.getValue()));
-                } else {
-                    this.coordinatorLogger.warning(String.format("Server at port %d down", server.getValue()));
-                }
-            } catch (Exception e) {
-                this.coordinatorLogger.warning(String.format("Exception while trying to reach Server at port %d", server.getValue()));
-                continue;
-            }
-        }
+        populateAcceptorsList(acceptors);
 
         int half = Math.floorDiv(acceptors.size(), 2) + 1;
         int promised = 0;
 
         switch (proposal.getOperation().getOperationType()) {
             case GET_ORDERS -> {
-                Map<Iterable<Order>, Integer> valueMap = new HashMap<>();
-                for (EcommerceServer acceptor : acceptors) {
-                    String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders";
-                    Iterable<Order> orders = restTemplate.getForObject(url, Iterable.class);
-                    if (orders != null) {
-                        coordinatorLogger.info("Response received from - "
-                                + acceptor.getHostname() + ":" + acceptor.getPort());
-                        valueMap.put(orders,
-                                valueMap.getOrDefault(orders, 0) + 1);
-                    }
-                }
-
-                for (Iterable<Order> value : valueMap.keySet()) {
-                    if (valueMap.get(value) >= half) {
-                        Result result = new Result();
-                        result.setOk(true);
-                        result.setMessage("Orders retrieved from distributed servers: " + value);
-                        result.setOrders(value);
-                        return result;
-                    }
-                }
-
-                Result result = new Result();
-                result.setResultCodeEnum(ResultCodeEnum.KEY_NOT_FOUND);
-                result.setMessage(Response.ERROR.getMessage());
-                return result;
+                return getOrdersFromAllServers(acceptors, half);
             }
 
             case GET_PRODUCTS -> {
-                Map<Iterable<Product>, Integer> valueMap = new HashMap<>();
-                for (EcommerceServer acceptor : acceptors) {
-                    String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/products";
-                    Iterable<Product> products = restTemplate.getForObject(url, Iterable.class);
-                    if (products != null) {
-                        coordinatorLogger.info("Response received from - "
-                                + acceptor.getHostname() + ":" + acceptor.getPort());
-                        valueMap.put(products,
-                                valueMap.getOrDefault(products, 0) + 1);
-                    }
-                }
-
-                for (Iterable<Product> value : valueMap.keySet()) {
-                    if (valueMap.get(value) >= half) {
-                        Result result = new Result();
-                        result.setOk(true);
-                        result.setMessage("Products retrieved from distributed servers: " + value);
-                        result.setProducts(value);
-                        return result;
-                    }
-                }
-                Result result = new Result();
-                result.setResultCodeEnum(ResultCodeEnum.KEY_NOT_FOUND);
-                result.setMessage(Response.ERROR.getMessage());
-                return result;
+                return getProductsFromAllServers(acceptors, half);
             }
 
             case CREATE_ORDER -> {
-                // Phase 1: Send the Promises
-                for (EcommerceServer acceptor : acceptors) {
-                    try {
-                        String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders/promise";
-                        ResponseEntity<Promise> promiseResponseEntity = restTemplate.postForEntity(url, proposal, Promise.class);
-                        Promise promise = null;
-                        if (promiseResponseEntity.getStatusCode().is2xxSuccessful()) {
-                            promise = promiseResponseEntity.getBody();
-                        }
-
-                        if (promise == null) {
-                            this.coordinatorLogger.info(String.format("Server at Port %d NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
-                            this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
-                        } else if (promise.getStatus()== Status.PROMISED || promise.getStatus() == Status.ACCEPTED) {
-                            promised++;
-                            this.coordinatorLogger.info(String.format("Server at port %d PROMISED proposal %d", acceptor.getPort(), proposal.getId()));
-                            this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
-                        } else {
-                            this.coordinatorLogger.info(String.format("Server at port %d REJECTED proposal %d", acceptor.getPort(), proposal.getId()));
-                            this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
-                        }
-                    } catch (Exception e) {
-                        this.coordinatorLogger.warning(String.format("Server at port %d DID NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
-                        continue;
-                    }
-                }
-
-                // Phase 2 - Send the "accept" message
-                if (promised < half) {
-                    Result result = new Result();
-                    result.setResultCodeEnum(ResultCodeEnum.CONSENSUS_NOT_REACHED);
-                    result.setMessage("Consensus not reached");
-                    return result;
-                } else {
-                    coordinatorLogger.info("Promise Phase successfully completed.");
-                }
-
-                int accepted = 0;
-                for (EcommerceServer acceptor : acceptors) {
-                    try {
-                        Boolean isAccepted = false;
-                        String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders/accept";
-                        ResponseEntity<Boolean> acceptResponseEntity = restTemplate.postForEntity(url, proposal, Boolean.class);
-                        if (acceptResponseEntity.getStatusCode().is2xxSuccessful()) {
-                            isAccepted = acceptResponseEntity.getBody();
-                        }
-
-                        if (isAccepted == null) {
-                            this.coordinatorLogger.warning(String.format("Server at port %d DID NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
-                            this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
-                        } else if (isAccepted) {
-                            accepted++;
-                            this.coordinatorLogger.info(String.format("Server at port %d ACCEPTED proposal %d", acceptor.getPort(), proposal.getId()));
-                            this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
-                        }
-                    } catch (Exception e) {
-                        this.coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
-                        this.coordinatorLogger.warning(String.format("Server at port %d DID NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
-                    }
-                }
-
-                if (accepted < half) {
-                    Result result = new Result();
-                    result.setResultCodeEnum(ResultCodeEnum.CONSENSUS_NOT_REACHED);
-                    result.setMessage("Cannot reach consensus");
-                    return result;
-                } else {
-                    coordinatorLogger.info("Accept Phase successfully completed.");
-                }
-
-                // Phase 3 - Send the "learn" message (this is extra credit)
-                int learnt = 0;
-                Result executionResult = null;
-                for (EcommerceServer acceptor : acceptors) {
-                    try {
-                        Result result = null;
-                        String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders/learn";
-                        ResponseEntity<Object> resultResponseEntity = restTemplate.postForEntity(url, proposal, Object.class);
-                        if (resultResponseEntity.getStatusCode().is2xxSuccessful()) {
-                            result = new Result();
-                            result.setOk(true);
-//                            result.setOrder(resultResponseEntity.getBody());
-                        }
-
-                        if (result != null && result.isOk()) {
-                            learnt++;
-                            executionResult = result;
-                        }
-
-                    } catch (Exception e) {
-                        coordinatorLogger.info("exception in learn phase");
-                        coordinatorLogger.info(e.getLocalizedMessage());
-                    }
-                }
-
-                if (learnt < half) {
-                    Result result = new Result();
-                    result.setResultCodeEnum(ResultCodeEnum.CONSENSUS_NOT_REACHED);
-                    result.setMessage("Cannot reach consensus");
-                    return result;
-                } else {
-                    coordinatorLogger.info("Learn Phase successfully completed.");
-                }
-
-                return executionResult;
-
-            }
-
-            case CREATE_PRODUCT -> {
-
+                return perform3PhasePAXOSOrderCreation(proposal, acceptors, half, promised);
             }
 
         }
 
-        return null;
+        throw new IllegalArgumentException("Unsupported Operation Provided in Proposal, cannot proceed further");
     }
 
     @Override
@@ -255,14 +85,200 @@ public class Coordinator implements CoordinatorInterface {
     @Override
     public void addAcceptor(String hostName, int port) {
         coordinatorLogger.info("New acceptor got added at - " + hostName + ":" + port);
-        coordinatorLogger.info(getCurrentTimeTillMillis(System.currentTimeMillis()));
         this.servers.add(Map.entry(hostName, port));
     }
 
-    private static String getCurrentTimeTillMillis(long currentTimeMillis) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMM dd,yyyy HH:mm:ss:SS");
-        Date date = new Date(currentTimeMillis);
-        return simpleDateFormat.format(date);
+    private void populateAcceptorsList(List<EcommerceServer> acceptors) {
+        for (Map.Entry<String, Integer> server : this.servers) {
+            try {
+                String url = "http://" + server.getKey() + ":" + server.getValue() + "/api/server";
+                ResponseEntity<String> serverResponse = restTemplate.getForEntity(url, String.class);
+                if (serverResponse.getStatusCode().is2xxSuccessful()) {
+                    this.coordinatorLogger.info(String.format("Server at port %d Responded", server.getValue()));
+                    acceptors.add(new EcommerceServer(server.getKey(), server.getValue()));
+                } else {
+                    this.coordinatorLogger.warning(String.format("Server at port %d down", server.getValue()));
+                }
+            } catch (Exception e) {
+                this.coordinatorLogger.warning(String.format("Exception while trying to reach Server at port %d", server.getValue()));
+            }
+        }
+    }
+
+    @Nullable
+    private Result perform3PhasePAXOSOrderCreation(Proposal proposal, List<EcommerceServer> acceptors, int half, int promised) {
+        // Phase 1: Send the Promises
+        promised = performPromisePhase(proposal, acceptors, promised);
+
+        if (promised < half) {
+            Result result = new Result();
+            result.setResultCodeEnum(ResultCodeEnum.CONSENSUS_NOT_REACHED);
+            result.setMessage("Consensus not reached");
+            return result;
+        } else {
+            coordinatorLogger.info("Promise Phase successfully completed.");
+        }
+
+        // Phase 2 - Send the "accept" message
+        int accepted = performAcceptPhase(proposal, acceptors);
+
+        if (accepted < half) {
+            Result result = new Result();
+            result.setResultCodeEnum(ResultCodeEnum.CONSENSUS_NOT_REACHED);
+            result.setMessage("Cannot reach consensus");
+            return result;
+        } else {
+            coordinatorLogger.info("Accept Phase successfully completed.");
+        }
+
+        // Phase 3 - Send the "learn" message (this is extra credit)
+        return performLearnPhaseAndAnnounceResult(proposal, acceptors, half);
+    }
+
+    private int performPromisePhase(Proposal proposal, List<EcommerceServer> acceptors, int promised) {
+        for (EcommerceServer acceptor : acceptors) {
+            try {
+                String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders/promise";
+                ResponseEntity<Promise> promiseResponseEntity = restTemplate.postForEntity(url, proposal, Promise.class);
+                Promise promise = null;
+                if (promiseResponseEntity.getStatusCode().is2xxSuccessful()) {
+                    promise = promiseResponseEntity.getBody();
+                }
+
+                if (promise == null) {
+                    this.coordinatorLogger.info(String.format("Server at Port %d NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
+                } else if (promise.getStatus() == Status.PROMISED || promise.getStatus() == Status.ACCEPTED) {
+                    promised++;
+                    this.coordinatorLogger.info(String.format("Server at port %d PROMISED proposal %d", acceptor.getPort(), proposal.getId()));
+                } else {
+                    this.coordinatorLogger.info(String.format("Server at port %d REJECTED proposal %d", acceptor.getPort(), proposal.getId()));
+                }
+            } catch (Exception e) {
+                this.coordinatorLogger.warning(String.format("Server at port %d DID NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
+            }
+        }
+        return promised;
+    }
+
+    private int performAcceptPhase(Proposal proposal, List<EcommerceServer> acceptors) {
+        int accepted = 0;
+        for (EcommerceServer acceptor : acceptors) {
+            try {
+                Boolean isAccepted = false;
+                String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders/accept";
+                ResponseEntity<Boolean> acceptResponseEntity = restTemplate.postForEntity(url, proposal, Boolean.class);
+                if (acceptResponseEntity.getStatusCode().is2xxSuccessful()) {
+                    isAccepted = acceptResponseEntity.getBody();
+                }
+
+                if (isAccepted == null) {
+                    this.coordinatorLogger.warning(String.format("Server at port %d DID NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
+                } else if (isAccepted) {
+                    accepted++;
+                    this.coordinatorLogger.info(String.format("Server at port %d ACCEPTED proposal %d", acceptor.getPort(), proposal.getId()));
+                }
+            } catch (Exception e) {
+                this.coordinatorLogger.warning(String.format("Server at port %d DID NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
+            }
+        }
+        return accepted;
+    }
+
+    @Nullable
+    private Result performLearnPhaseAndAnnounceResult(Proposal proposal, List<EcommerceServer> acceptors, int half) {
+        int learnt = 0;
+        Result executionResult = null;
+        for (EcommerceServer acceptor : acceptors) {
+            try {
+                Result result = null;
+                String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders/learn";
+                ResponseEntity<Object> resultResponseEntity = restTemplate.postForEntity(url, proposal, Object.class);
+                if (resultResponseEntity.getStatusCode().is2xxSuccessful()) {
+                    result = new Result();
+                    result.setOk(true);
+//                            result.setOrder(resultResponseEntity.getBody());
+                }
+
+                if (result != null && result.isOk()) {
+                    learnt++;
+                    executionResult = result;
+                }
+
+            } catch (Exception e) {
+                coordinatorLogger.info("exception in learn phase");
+                coordinatorLogger.info(e.getLocalizedMessage());
+            }
+        }
+
+        if (learnt < half) {
+            Result result = new Result();
+            result.setResultCodeEnum(ResultCodeEnum.CONSENSUS_NOT_REACHED);
+            result.setMessage("Cannot reach consensus");
+            return result;
+        } else {
+            coordinatorLogger.info("Learn Phase successfully completed.");
+        }
+
+        return executionResult;
+    }
+
+    @NotNull
+    private Result getProductsFromAllServers(List<EcommerceServer> acceptors, int half) {
+        Map<Iterable<Product>, Integer> valueMap = new HashMap<>();
+        for (EcommerceServer acceptor : acceptors) {
+            String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/products";
+            Iterable<Product> products = restTemplate.getForObject(url, Iterable.class);
+            if (products != null) {
+                coordinatorLogger.info("Response received from - "
+                        + acceptor.getHostname() + ":" + acceptor.getPort());
+                valueMap.put(products,
+                        valueMap.getOrDefault(products, 0) + 1);
+            }
+        }
+
+        for (Iterable<Product> value : valueMap.keySet()) {
+            if (valueMap.get(value) >= half) {
+                Result result = new Result();
+                result.setOk(true);
+                result.setMessage("Products retrieved from distributed servers: " + value);
+                result.setProducts(value);
+                return result;
+            }
+        }
+        Result result = new Result();
+        result.setResultCodeEnum(ResultCodeEnum.KEY_NOT_FOUND);
+        result.setMessage(Response.ERROR.getMessage());
+        return result;
+    }
+
+    @NotNull
+    private Result getOrdersFromAllServers(List<EcommerceServer> acceptors, int half) {
+        Map<Iterable<Order>, Integer> valueMap = new HashMap<>();
+        for (EcommerceServer acceptor : acceptors) {
+            String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders";
+            Iterable<Order> orders = restTemplate.getForObject(url, Iterable.class);
+            if (orders != null) {
+                coordinatorLogger.info("Response received from - "
+                        + acceptor.getHostname() + ":" + acceptor.getPort());
+                valueMap.put(orders,
+                        valueMap.getOrDefault(orders, 0) + 1);
+            }
+        }
+
+        for (Iterable<Order> value : valueMap.keySet()) {
+            if (valueMap.get(value) >= half) {
+                Result result = new Result();
+                result.setOk(true);
+                result.setMessage("Orders retrieved from distributed servers: " + value);
+                result.setOrders(value);
+                return result;
+            }
+        }
+
+        Result result = new Result();
+        result.setResultCodeEnum(ResultCodeEnum.KEY_NOT_FOUND);
+        result.setMessage(Response.ERROR.getMessage());
+        return result;
     }
 
     private static class EcommerceServer {

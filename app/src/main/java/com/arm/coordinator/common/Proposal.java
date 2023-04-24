@@ -70,7 +70,6 @@ public class Proposal {
      */
     @JsonIgnore
     public static synchronized Proposal generateProposal(EcommerceOperation ecommerceOperation) {
-        //String s = new SimpleDateFormat("HHmmssSSS").format(new Date());
         Proposal proposal = new Proposal(System.currentTimeMillis(), ecommerceOperation);
         try {
             Thread.sleep(1);

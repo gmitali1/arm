@@ -19,7 +19,7 @@ public class CoordinatorService {
     CoordinatorInterface coordinatorInterface;
     RestTemplate restTemplate;
 
-    private AtomicLong orderId;
+    private final AtomicLong orderId;
 
     public CoordinatorService() {
         coordinatorInterface = new Coordinator();
