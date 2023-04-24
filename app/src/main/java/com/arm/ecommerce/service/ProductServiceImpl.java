@@ -29,8 +29,14 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product save(Product product) {
-        return productRepository.save(product);
+    public boolean saveAll(Iterable<Product> products) {
+        try {
+            productRepository.saveAll(products);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
 }
