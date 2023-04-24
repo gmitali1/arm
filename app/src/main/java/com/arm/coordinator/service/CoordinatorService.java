@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Service
@@ -18,17 +20,30 @@ public class CoordinatorService {
 
     CoordinatorInterface coordinatorInterface;
     RestTemplate restTemplate;
-
+    private final List<Product> productList;
     private final AtomicLong orderId;
 
+
     public CoordinatorService() {
-        coordinatorInterface = new Coordinator();
+        productList = new ArrayList<>();
+        populateProductList();
+        coordinatorInterface = new Coordinator(productList);
         restTemplate = new RestTemplateBuilder().build();
         orderId = new AtomicLong(1L);
     }
 
+    private void populateProductList() {
+        productList.add(new Product(1L, "TV Set", 300.00, "http://placehold.it/200x100"));
+        productList.add(new Product(2L, "Game Console", 200.00, "http://placehold.it/200x100"));
+        productList.add(new Product(3L, "Sofa", 100.00, "http://placehold.it/200x100"));
+        productList.add(new Product(4L, "Ice-cream", 5.00, "http://placehold.it/200x100"));
+        productList.add(new Product(5L, "Beer", 3.00, "http://placehold.it/200x100"));
+        productList.add(new Product(6L, "Phone", 500.00, "http://placehold.it/200x100"));
+        productList.add(new Product(7L, "Watch", 30.00, "http://placehold.it/200x100"));
+    }
+
     public void addAcceptor(String hostName, int port) {
-        coordinatorInterface.addAcceptor(hostName,port);
+        coordinatorInterface.addAcceptor(hostName, port);
     }
 
     public Iterable<Order> getAllOrders() {

@@ -27,12 +27,15 @@ public class Coordinator implements CoordinatorInterface {
 
     private final RestTemplate restTemplate;
 
+    private final List<Product> productList;
+
     /**
      * Constructor to create coordinator with a set of servers.
      */
-    public Coordinator() {
+    public Coordinator(List<Product> productList) {
         this.servers = new HashSet<>();
-        restTemplate = new RestTemplateBuilder().build();
+        this.restTemplate = new RestTemplateBuilder().build();
+        this.productList = productList;
     }
 
     private synchronized Result execute(Proposal proposal) {
@@ -41,7 +44,6 @@ public class Coordinator implements CoordinatorInterface {
         populateAcceptorsList(acceptors);
 
         int half = Math.floorDiv(acceptors.size(), 2) + 1;
-        int promised = 0;
 
         switch (proposal.getOperation().getOperationType()) {
             case GET_ORDERS -> {
@@ -53,7 +55,7 @@ public class Coordinator implements CoordinatorInterface {
             }
 
             case CREATE_ORDER -> {
-                return perform3PhasePAXOSOrderCreation(proposal, acceptors, half, promised);
+                return perform3PhasePAXOSOrderCreation(proposal, acceptors, half);
             }
 
         }
@@ -83,9 +85,50 @@ public class Coordinator implements CoordinatorInterface {
     }
 
     @Override
-    public void addAcceptor(String hostName, int port) {
+    public synchronized void addAcceptor(String hostName, int port) {
+        EcommerceServer server = new EcommerceServer(hostName, port);
         coordinatorLogger.info("New acceptor got added at - " + hostName + ":" + port);
+        if (perform2PCPrepStage(server)) {
+            if (perform2PCCommitStage(server)) {
+                coordinatorLogger.info("Successfully populated server " + server.getServerName() + " with products.");
+            } else {
+                coordinatorLogger.severe("Failed to populate server " + server.getServerName() + " with products.");
+            }
+        } else {
+            coordinatorLogger.severe("Failed to populate server " + server.getServerName() + " with products.");
+        }
         this.servers.add(Map.entry(hostName, port));
+    }
+
+    private synchronized boolean perform2PCPrepStage(EcommerceServer server) {
+        try {
+            coordinatorLogger.info("Sending Prepare message to " + server.getServerName());
+            // Perform Is Server Ready Rest Call
+            String url = "http://" + server.getHostname() + ":" + server.getPort() + "/api/server";
+            ResponseEntity<String> serverResponse = restTemplate.getForEntity(url, String.class);
+            if (serverResponse.getStatusCode().is2xxSuccessful()) {
+                this.coordinatorLogger.info(String.format("Server at port %d Responded", server.getPort()));
+                return true;
+            } else {
+                this.coordinatorLogger.warning(String.format("Server at port %d down", server.getPort()));
+                return false;
+            }
+        } catch (Exception e) {
+            coordinatorLogger.info(server.getServerName() + " is down during prepare");
+            return false;
+        }
+    }
+
+    private synchronized boolean perform2PCCommitStage(EcommerceServer server) {
+        try {
+            coordinatorLogger.info("Executing Product Population operation on " + server.getServerName());
+            // Perform Product List Population Rest Request
+            String url = "http://" + server.getHostname() + ":" + server.getPort() + "/api/products";
+            return Boolean.TRUE.equals(restTemplate.postForObject(url, productList, Boolean.class));
+        } catch (Exception e) {
+            coordinatorLogger.info(server.getServerName() + " is down during commit");
+            return false;
+        }
     }
 
     private void populateAcceptorsList(List<EcommerceServer> acceptors) {
@@ -106,9 +149,9 @@ public class Coordinator implements CoordinatorInterface {
     }
 
     @Nullable
-    private Result perform3PhasePAXOSOrderCreation(Proposal proposal, List<EcommerceServer> acceptors, int half, int promised) {
+    private Result perform3PhasePAXOSOrderCreation(Proposal proposal, List<EcommerceServer> acceptors, int half) {
         // Phase 1: Send the Promises
-        promised = performPromisePhase(proposal, acceptors, promised);
+        int promised = performPromisePhase(proposal, acceptors);
 
         if (promised < half) {
             Result result = new Result();
@@ -135,7 +178,8 @@ public class Coordinator implements CoordinatorInterface {
         return performLearnPhaseAndAnnounceResult(proposal, acceptors, half);
     }
 
-    private int performPromisePhase(Proposal proposal, List<EcommerceServer> acceptors, int promised) {
+    private int performPromisePhase(Proposal proposal, List<EcommerceServer> acceptors) {
+        int promised = 0;
         for (EcommerceServer acceptor : acceptors) {
             try {
                 String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders/promise";
@@ -297,6 +341,10 @@ public class Coordinator implements CoordinatorInterface {
 
         public String getHostname() {
             return hostname;
+        }
+
+        public String getServerName() {
+            return hostname + ":" + port;
         }
 
     }
