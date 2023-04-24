@@ -2,8 +2,6 @@ package com.arm.coordinator.model;
 
 import com.arm.coordinator.common.Result;
 
-import java.rmi.RemoteException;
-
 /**
  * Interface for adding new acceptors which extends KeyValueStore.
  *

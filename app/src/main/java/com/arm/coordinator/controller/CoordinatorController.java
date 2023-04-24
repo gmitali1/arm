@@ -1,15 +1,13 @@
 package com.arm.coordinator.controller;
+
 import com.arm.coordinator.model.OrderForm;
 import com.arm.coordinator.service.CoordinatorService;
 import com.arm.ecommerce.model.Order;
 import com.arm.ecommerce.model.Product;
 import jakarta.validation.constraints.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.rmi.RemoteException;
 
 @RestController
 @RequestMapping("/api")
@@ -23,8 +21,7 @@ public class CoordinatorController {
 
     @GetMapping("/coordinator/register-server")
     @ResponseStatus(HttpStatus.OK)
-    private ResponseEntity<String> addAcceptor(@RequestParam("hostName") String hostName, @RequestParam("port") int port)
-            throws RemoteException {
+    private ResponseEntity<String> addAcceptor(@RequestParam("hostName") String hostName, @RequestParam("port") int port) {
         coordinatorService.addAcceptor(hostName, port);
         return new ResponseEntity<>("Acceptor Added", HttpStatus.OK);
     }

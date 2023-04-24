@@ -1,13 +1,13 @@
 package com.arm.ecommerce.exception;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +28,6 @@ public class ApiExceptionHandler {
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
-    @SuppressWarnings("rawtypes")
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorItem> handle(ResourceNotFoundException e) {
         ErrorItem error = new ErrorItem();

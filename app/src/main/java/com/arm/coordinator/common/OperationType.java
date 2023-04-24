@@ -9,7 +9,5 @@ public enum OperationType {
 
     GET_ORDERS,
 
-    CREATE_PRODUCT,
-
     GET_PRODUCTS
 }
