@@ -1,8 +1,5 @@
 package com.arm.coordinator.common;
 
-import com.arm.ecommerce.model.Order;
-import com.arm.ecommerce.model.Product;
-
 import java.io.Serializable;
 
 /**
@@ -16,14 +13,15 @@ public class Result implements Serializable {
     private String message;
     private ResultCodeEnum resultCodeEnum;
 
-    private Iterable<Order> orders;
+    private Iterable<OrderResponseObject> orders;
 
-    private Iterable<Product> products;
+    private Iterable<ProductResponseObject> products;
 
-    public Result() {}
+    public Result() {
+    }
 
-    public Result(Boolean ok, String message, ResultCodeEnum resultCodeEnum, Iterable<Order> orders,
-                  Iterable<Product> products) {
+    public Result(Boolean ok, String message, ResultCodeEnum resultCodeEnum, Iterable<OrderResponseObject> orders,
+                  Iterable<ProductResponseObject> products) {
         this.ok = ok;
         this.message = message;
         this.resultCodeEnum = resultCodeEnum;
@@ -55,19 +53,19 @@ public class Result implements Serializable {
         this.resultCodeEnum = resultCodeEnum;
     }
 
-    public Iterable<Order> getOrders() {
+    public Iterable<OrderResponseObject> getOrders() {
         return orders;
     }
 
-    public void setOrders(Iterable<Order> orders) {
+    public void setOrders(Iterable<OrderResponseObject> orders) {
         this.orders = orders;
     }
 
-    public Iterable<Product> getProducts() {
+    public Iterable<ProductResponseObject> getProducts() {
         return products;
     }
 
-    public void setProducts(Iterable<Product> products) {
+    public void setProducts(Iterable<ProductResponseObject> products) {
         this.products = products;
     }
 
