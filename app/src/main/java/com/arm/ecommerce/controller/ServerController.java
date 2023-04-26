@@ -1,7 +1,7 @@
 package com.arm.ecommerce.controller;
 
-import com.arm.coordinator.model.OrderForm;
-import com.arm.ecommerce.dto.OrderProductDto;
+import com.arm.coordinator.common.OrderProductResponseObject;
+import com.arm.coordinator.common.OrderResponseObject;
 import com.arm.ecommerce.model.Order;
 import com.arm.ecommerce.model.OrderProduct;
 import com.arm.ecommerce.model.OrderStatus;
@@ -18,8 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The ServerController class is a REST controller that handles requests related to the server and orders.
- * It has endpoints for checking the server's status, getting all orders, and adding orders.
+ * The {@code ServerController} class represents a REST API controller that handles server-related requests and responses.
  */
 @RestController
 @RequestMapping("/api/server")
@@ -32,11 +31,11 @@ public class ServerController {
     private final ProductService productService;
 
     /**
-     * Constructs a new ServerController object with the given OrderService.
+     * Constructs a new {@code ServerController} with the specified services.
      *
-     * @param orderService        the OrderService used by the ServerController
-     * @param orderProductService
-     * @param productService
+     * @param orderService        the {@code OrderService} instance that handles orders
+     * @param orderProductService the {@code OrderProductService} instance that handles order products
+     * @param productService      the {@code ProductService} instance that handles products
      */
     public ServerController(OrderService orderService, OrderProductService orderProductService, ProductService productService) {
         this.orderService = orderService;
@@ -45,9 +44,9 @@ public class ServerController {
     }
 
     /**
-     * Endpoint for checking if the server is alive.
+     * Returns a response entity indicating whether the server is alive.
      *
-     * @return a ResponseEntity containing the message "Server is Alive" and a status code of 200 (OK)
+     * @return a response entity indicating whether the server is alive
      */
     @GetMapping
     public ResponseEntity<String> isServerAlive() {
@@ -55,9 +54,9 @@ public class ServerController {
     }
 
     /**
-     * Endpoint for getting all orders.
+     * Returns a wrapper object containing all orders of all users.
      *
-     * @return an OrderWrapper object containing all orders of all users
+     * @return a wrapper object containing all orders of all users
      */
     @GetMapping(path = "/getAllOrders")
     @ResponseStatus(HttpStatus.OK)
@@ -66,30 +65,31 @@ public class ServerController {
     }
 
     /**
-     * Endpoint for adding orders.
+     * Adds all orders specified in the request body and returns a response entity indicating success.
      *
-     * @return a ResponseEntity containing a boolean value indicating whether the orders were successfully added
+     * @param orders an iterable of {@code OrderResponseObject} instances containing the orders to add
+     * @return a response entity indicating success
      */
     @PostMapping(path = "/addAllOrders")
-    public ResponseEntity<Boolean> addAllOrders(@RequestBody Iterable<OrderForm> orderForms) {
-        for (OrderForm orderForm : orderForms) {
-            List<OrderProductDto> formDtos = orderForm.getProductOrders();
+    public ResponseEntity<Boolean> addAllOrders(@RequestBody Iterable<OrderResponseObject> orders) {
+        for (OrderResponseObject orderResponseObject : orders) {
             Order order = new Order();
             order.setStatus(OrderStatus.PAID.name());
-            order.setId(orderForm.getOrderId());
+            order.setId(orderResponseObject.getId());
             order = this.orderService.create(order);
 
             List<OrderProduct> orderProducts = new ArrayList<>();
-            for (OrderProductDto dto : formDtos) {
-                orderProducts.add(orderProductService.create(new OrderProduct(order, productService.getProduct(dto
+            for (OrderProductResponseObject orderProduct : orderResponseObject.getOrderProducts()) {
+                orderProducts.add(orderProductService.create(new OrderProduct(order, productService.getProduct(orderProduct
                         .getProduct()
-                        .getId()), dto.getQuantity())));
+                        .getId()), orderProduct.getQuantity())));
             }
 
             order.setOrderProducts(orderProducts);
 
             this.orderService.update(order);
         }
+
         return ResponseEntity.ok(true);
     }
 

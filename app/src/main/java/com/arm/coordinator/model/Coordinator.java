@@ -9,7 +9,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * Represents the Coordinator responsible for managing RMI Servers functioning as replicas to store data in the
@@ -30,7 +29,6 @@ public class Coordinator implements CoordinatorInterface {
 
     private String productPopulationKey;
 
-    private HashMap<Long, OrderForm> completedOrderForms;
 
     /**
      * Constructor to create coordinator with a set of servers.
@@ -39,7 +37,6 @@ public class Coordinator implements CoordinatorInterface {
         this.servers = new HashSet<>();
         this.restTemplate = new RestTemplateBuilder().build();
         this.productList = productList;
-        completedOrderForms = new HashMap<>();
     }
 
     private synchronized Result execute(Proposal proposal) {
@@ -123,10 +120,7 @@ public class Coordinator implements CoordinatorInterface {
         if (missedOrdersIds.size() == 0) {
             return true;
         } else {
-            return addOrdersToServer(newlyAddedServer,
-                    missedOrdersIds
-                            .stream()
-                            .map(id -> completedOrderForms.get(id.getId())).collect(Collectors.toList()));
+            return addOrdersToServer(newlyAddedServer, missedOrdersIds.stream().toList());
         }
 
     }
@@ -142,7 +136,7 @@ public class Coordinator implements CoordinatorInterface {
         return new ArrayList<>();
     }
 
-    private Boolean addOrdersToServer(EcommerceServer server, Iterable<OrderForm> orders) {
+    private Boolean addOrdersToServer(EcommerceServer server, Iterable<OrderResponseObject> orders) {
         coordinatorLogger.info("Adding all missing orders to " + server.getServerName());
         // Do rest call to add orders
         String url = "http://" + server.getHostname() + ":" + server.getPort() + "/api/server/addAllOrders";
@@ -304,7 +298,6 @@ public class Coordinator implements CoordinatorInterface {
                 if (resultResponseEntity.getStatusCode().is2xxSuccessful()) {
                     result = new Result();
                     result.setOk(true);
-                    completedOrderForms.put(proposal.getOperation().getOrderForm().getOrderId(), proposal.getOperation().getOrderForm());
 //                            result.setOrder(resultResponseEntity.getBody());
                 }
 
