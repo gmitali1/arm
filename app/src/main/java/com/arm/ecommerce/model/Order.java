@@ -20,12 +20,15 @@ public class Order {
     @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate dateCreated;
 
+    private int userId;
+
     private String status;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "pk.order")
     @Valid
     private List<OrderProduct> orderProducts = new ArrayList<>();
+
 
     public Order() {
 
@@ -76,6 +79,14 @@ public class Order {
 
     public void setOrderProducts(List<OrderProduct> orderProducts) {
         this.orderProducts = orderProducts;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
     @Override

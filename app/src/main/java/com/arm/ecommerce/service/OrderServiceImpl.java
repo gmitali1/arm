@@ -18,8 +18,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Iterable<Order> getAllOrders() {
-        return this.orderRepository.findAll();
+    public Iterable<Order> getAllOrdersByUserId(int userId) {
+        return this.orderRepository.findOrdersByUserId(userId);
     }
 
     @Override

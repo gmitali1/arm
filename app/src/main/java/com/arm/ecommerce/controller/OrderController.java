@@ -7,6 +7,7 @@ import com.arm.ecommerce.model.Order;
 import com.arm.ecommerce.service.PaxosOrderService;
 import com.arm.ecommerce.service.PaxosServer;
 import jakarta.validation.constraints.NotNull;
+import jakarta.websocket.server.PathParam;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +26,8 @@ public class OrderController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public @NotNull Iterable<Order> list() {
-        return this.paxosOrderService.findAll();
+    public @NotNull Iterable<Order> list(@PathParam("userId") int userId) {
+        return this.paxosOrderService.findAllByUserId(userId);
     }
 
     @PostMapping(path = "/promise")

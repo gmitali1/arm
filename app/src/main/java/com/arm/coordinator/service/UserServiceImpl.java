@@ -1,7 +1,7 @@
-package com.arm.ecommerce.service;
+package com.arm.coordinator.service;
 
-import com.arm.ecommerce.model.EcommerceUser;
-import com.arm.ecommerce.repository.UserRepository;
+import com.arm.coordinator.model.EcommerceUser;
+import com.arm.coordinator.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,4 +24,10 @@ public class UserServiceImpl implements UserService {
     public EcommerceUser signup(EcommerceUser ecommerceUser) {
         return this.userRepository.save(ecommerceUser);
     }
+
+    @Override
+    public EcommerceUser signIn(String username, String password) {
+        return this.userRepository.getEcommerceUserByUsernameAndPassword(username, password);
+    }
+
 }

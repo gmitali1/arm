@@ -1,7 +1,7 @@
-package com.arm.ecommerce.controller;
+package com.arm.coordinator.controller;
 
-import com.arm.ecommerce.model.EcommerceUser;
-import com.arm.ecommerce.service.UserService;
+import com.arm.coordinator.model.EcommerceUser;
+import com.arm.coordinator.service.UserService;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,12 +21,12 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     public @NotNull ResponseEntity<EcommerceUser> login(@RequestParam String username, @RequestParam String password) {
         System.out.println(username + "-" + password);
-        for(EcommerceUser u :this.userService.getAllUsers()) {
-            if (u.getPassword().equals(password) && u.getUsername().equals(username)) {
-                return new ResponseEntity<>(u, null, HttpStatus.OK);
-            }
+        EcommerceUser ecommerceUser = userService.signIn(username, password);
+        if (ecommerceUser != null) {
+            return new ResponseEntity<>(ecommerceUser, HttpStatus.OK);
         }
-        return new ResponseEntity<>(null, null, HttpStatus.NOT_FOUND);
+
+        return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
     }
 
     @PostMapping
@@ -37,6 +37,6 @@ public class UserController {
                 return new ResponseEntity<>(null, null, HttpStatus.FORBIDDEN);
             }
         }
-        return new ResponseEntity<>(this.userService.signup(ecommerceUser), null, HttpStatus.CREATED);
+        return new ResponseEntity<>(this.userService.signup(ecommerceUser), HttpStatus.CREATED);
     }
 }

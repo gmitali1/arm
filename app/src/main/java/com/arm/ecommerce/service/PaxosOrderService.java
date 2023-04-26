@@ -41,8 +41,8 @@ public class PaxosOrderService implements PaxosServer<Order> {
     }
 
     @Override
-    public Iterable<Order> findAll() {
-        return orderService.getAllOrders();
+    public Iterable<Order> findAllByUserId(int userId) {
+        return orderService.getAllOrdersByUserId(userId);
     }
 
     @Override
@@ -142,6 +142,7 @@ public class PaxosOrderService implements PaxosServer<Order> {
             }
 
             order.setOrderProducts(orderProducts);
+            order.setUserId(proposal.getOperation().getUserId());
 
             this.orderService.update(order);
 

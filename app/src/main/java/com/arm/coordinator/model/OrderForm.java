@@ -10,6 +10,8 @@ public class OrderForm {
 
     private long orderId;
 
+    private int userId;
+
     public long getOrderId() {
         return orderId;
     }
@@ -26,4 +28,11 @@ public class OrderForm {
         this.productOrders = productOrders;
     }
 
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
 }

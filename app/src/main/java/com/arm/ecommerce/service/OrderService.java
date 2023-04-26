@@ -8,7 +8,7 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public interface OrderService {
 
-    @NotNull Iterable<Order> getAllOrders();
+    @NotNull Iterable<Order> getAllOrdersByUserId(int userId);
 
     Order create(@NotNull(message = "The order cannot be null.") @Valid Order order);
 
