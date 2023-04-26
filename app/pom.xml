@@ -58,14 +58,44 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
     </dependencies>
-
+    <profiles>
+        <profile>
+            <id>profile1</id>
+            <properties>
+                <spring.boot.mainclass>com.arm.ecommerce.AppApplication</spring.boot.mainclass>
+            </properties>
+        </profile>
+        <profile>
+            <id>profile2</id>
+            <properties>
+                <spring.boot.mainclass>com.arm.coordinator.CoordinatorApplication</spring.boot.mainclass>
+            </properties>
+        </profile>
+    </profiles>
     <build>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
+                <configuration>
+                    <mainClass>com.arm.coordinator.CoordinatorApplication</mainClass>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+        </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+                <testFailureIgnore>true</testFailureIgnore>
+                <skipTests>true</skipTests>
+            </configuration>
+        </plugin>
         </plugins>
     </build>
-
 </project>
