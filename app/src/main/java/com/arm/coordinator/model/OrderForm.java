@@ -8,15 +8,15 @@ public class OrderForm {
 
     private List<OrderProductDto> productOrders;
 
-    private long orderId;
+    private Long orderId;
 
-    private int userId;
+    private Integer userId;
 
-    public long getOrderId() {
+    public Long getOrderId() {
         return orderId;
     }
 
-    public void setOrderId(long orderId) {
+    public void setOrderId(Long orderId) {
         this.orderId = orderId;
     }
 
@@ -28,11 +28,11 @@ public class OrderForm {
         this.productOrders = productOrders;
     }
 
-    public int getUserId() {
+    public Integer getUserId() {
         return userId;
     }
 
-    public void setUserId(int userId) {
+    public void setUserId(Integer userId) {
         this.userId = userId;
     }
 }

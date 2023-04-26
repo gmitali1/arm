@@ -3,7 +3,6 @@ import {Subject} from "rxjs/internal/Subject";
 import {ProductOrders} from "../models/product-orders.model";
 import {HttpClient, HttpResponse} from '@angular/common/http';
 import {Injectable} from "@angular/core";
-import {d} from "@angular/core/src/render3";
 
 @Injectable()
 export class EcommerceService {
@@ -28,7 +27,7 @@ export class EcommerceService {
     }
 
     getAllProducts() {
-        console.log("got products");
+        console.log("Getting Products");
         return this.http.get(this.productsUrl);
     }
 
