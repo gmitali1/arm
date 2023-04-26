@@ -1,13 +1,15 @@
 import {ProductOrder} from "../models/product-order.model";
 import {Subject} from "rxjs/internal/Subject";
 import {ProductOrders} from "../models/product-orders.model";
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpResponse} from '@angular/common/http';
 import {Injectable} from "@angular/core";
+import {d} from "@angular/core/src/render3";
 
 @Injectable()
 export class EcommerceService {
     private productsUrl = "/api/products";
     private ordersUrl = "/api/orders";
+    private loginUrl = "/api/users";
 
     private productOrder: ProductOrder;
     private orders: ProductOrders = new ProductOrders();
@@ -36,6 +38,19 @@ export class EcommerceService {
 
     saveOrder(order: ProductOrders) {
         return this.http.post(this.ordersUrl, order);
+    }
+
+    login(username : string , password : string) : Promise<string> {
+        return new Promise((resolve, reject) => {
+            const params = { username: username, password: password };
+            this.http.get(
+                this.loginUrl, { params }
+            ).subscribe((data: HttpResponse<any>) => {
+                resolve("OK");
+            }, (error) => {
+                reject("NOT_OK");
+            });
+        });
     }
 
     set SelectedProductOrder(value: ProductOrder) {
