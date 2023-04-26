@@ -1,7 +1,7 @@
 package com.arm.ecommerce.controller;
 
-import com.arm.coordinator.model.ProductPopulationRequest;
 import com.arm.ecommerce.model.Product;
+import com.arm.ecommerce.model.ProductPopulationRequest;
 import com.arm.ecommerce.service.ProductService;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;

@@ -1,11 +1,11 @@
 package com.arm.coordinator.service;
 
+import com.arm.coordinator.common.OrderResponseObject;
+import com.arm.coordinator.common.ProductResponseObject;
 import com.arm.coordinator.common.Result;
 import com.arm.coordinator.model.Coordinator;
 import com.arm.coordinator.model.CoordinatorInterface;
 import com.arm.coordinator.model.OrderForm;
-import com.arm.ecommerce.model.Order;
-import com.arm.ecommerce.model.Product;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -20,7 +20,7 @@ public class CoordinatorService {
 
     CoordinatorInterface coordinatorInterface;
     RestTemplate restTemplate;
-    private final List<Product> productList;
+    private final List<ProductResponseObject> productList;
     private final AtomicLong orderId;
 
 
@@ -33,20 +33,20 @@ public class CoordinatorService {
     }
 
     private void populateProductList() {
-        productList.add(new Product(1L, "TV Set", 300.00, "http://placehold.it/200x100"));
-        productList.add(new Product(2L, "Game Console", 200.00, "http://placehold.it/200x100"));
-        productList.add(new Product(3L, "Sofa", 100.00, "http://placehold.it/200x100"));
-        productList.add(new Product(4L, "Ice-cream", 5.00, "http://placehold.it/200x100"));
-        productList.add(new Product(5L, "Beer", 3.00, "http://placehold.it/200x100"));
-        productList.add(new Product(6L, "Phone", 500.00, "http://placehold.it/200x100"));
-        productList.add(new Product(7L, "Watch", 30.00, "http://placehold.it/200x100"));
+        productList.add(new ProductResponseObject(1L, "TV Set", 300.00, "http://placehold.it/200x100"));
+        productList.add(new ProductResponseObject(2L, "Game Console", 200.00, "http://placehold.it/200x100"));
+        productList.add(new ProductResponseObject(3L, "Sofa", 100.00, "http://placehold.it/200x100"));
+        productList.add(new ProductResponseObject(4L, "Ice-cream", 5.00, "http://placehold.it/200x100"));
+        productList.add(new ProductResponseObject(5L, "Beer", 3.00, "http://placehold.it/200x100"));
+        productList.add(new ProductResponseObject(6L, "Phone", 500.00, "http://placehold.it/200x100"));
+        productList.add(new ProductResponseObject(7L, "Watch", 30.00, "http://placehold.it/200x100"));
     }
 
     public void addAcceptor(String hostName, int port) {
         coordinatorInterface.addAcceptor(hostName, port);
     }
 
-    public Iterable<Order> getAllOrders() {
+    public Iterable<OrderResponseObject> getAllOrders() {
         // Do API Call for get all Orders and return all the orders
         Result ordersResult = coordinatorInterface.getAllOrders();
         if (ordersResult.isOk()) {
@@ -56,18 +56,18 @@ public class CoordinatorService {
         }
     }
 
-    public synchronized ResponseEntity<Order> createOrder(OrderForm form) {
+    public synchronized ResponseEntity<OrderResponseObject> createOrder(OrderForm form) {
         // Execute create Order in the coordinator interface
         form.setOrderId(orderId.getAndIncrement());
         Result result = coordinatorInterface.createOrder(form);
         if (result.isOk()) {
-            return ResponseEntity.ok(new Order());
+            return ResponseEntity.ok(new OrderResponseObject());
         }
         throw new IllegalStateException("Error Creating Order");
     }
 
 
-    public Iterable<Product> getAllProducts() {
+    public Iterable<ProductResponseObject> getAllProducts() {
         // Execute Get Operation for all products on all servers
         Result productResult = coordinatorInterface.getAllProducts();
         if (productResult.isOk()) {

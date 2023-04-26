@@ -33,4 +33,14 @@ public class OrderServiceImpl implements OrderService {
     public void update(Order order) {
         this.orderRepository.save(order);
     }
+
+    @Override
+    public Iterable<Order> addAllOrders(Iterable<Order> orders) {
+        return orderRepository.saveAll(orders);
+    }
+
+    @Override
+    public Iterable<Order> getAllOrdersOfAllUsers() {
+        return this.orderRepository.findAll();
+    }
 }

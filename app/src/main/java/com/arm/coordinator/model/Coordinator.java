@@ -1,8 +1,6 @@
 package com.arm.coordinator.model;
 
 import com.arm.coordinator.common.*;
-import com.arm.ecommerce.model.Order;
-import com.arm.ecommerce.model.Product;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -27,14 +25,15 @@ public class Coordinator implements CoordinatorInterface {
 
     private final RestTemplate restTemplate;
 
-    private final List<Product> productList;
+    private final List<ProductResponseObject> productList;
 
     private String productPopulationKey;
+
 
     /**
      * Constructor to create coordinator with a set of servers.
      */
-    public Coordinator(List<Product> productList) {
+    public Coordinator(List<ProductResponseObject> productList) {
         this.servers = new HashSet<>();
         this.restTemplate = new RestTemplateBuilder().build();
         this.productList = productList;
@@ -89,7 +88,62 @@ public class Coordinator implements CoordinatorInterface {
     @Override
     public synchronized void addAcceptor(String hostName, int port) {
         EcommerceServer server = new EcommerceServer(hostName, port);
+        perform2PCPopulationOfNewlyAddedServer(server);
+        if (performGossipAlgorithm(server)) {
+            coordinatorLogger.info("Server orders check complete. " + server.getServerName() + " is up to date now.");
+        }
         coordinatorLogger.info("New acceptor got added at - " + hostName + ":" + port);
+        this.servers.add(Map.entry(hostName, port));
+    }
+
+    private Boolean performGossipAlgorithm(EcommerceServer newlyAddedServer) {
+        coordinatorLogger.info("Checking for un-committed orders of " + newlyAddedServer.getServerName());
+        List<EcommerceServer> acceptors = new ArrayList<>();
+        populateAcceptorsList(acceptors);
+
+        Set<OrderResponseObject> availableOrders = new HashSet<>();
+        Set<OrderResponseObject> missedOrdersIds = new HashSet<>();
+        for (OrderResponseObject order : getAllOrdersOfAServer(newlyAddedServer)) {
+            availableOrders.add(order);
+        }
+
+        for (EcommerceServer acceptor : acceptors) {
+            Iterable<OrderResponseObject> newOrders = getAllOrdersOfAServer(acceptor);
+            for (OrderResponseObject order : newOrders) {
+                if (!availableOrders.contains(order)) {
+                    missedOrdersIds.add(order);
+                    coordinatorLogger.warning("Order #" + order.getId() + " not present on " + newlyAddedServer.getServerName());
+                }
+            }
+        }
+
+        if (missedOrdersIds.size() == 0) {
+            return true;
+        } else {
+            return addOrdersToServer(newlyAddedServer, missedOrdersIds.stream().toList());
+        }
+
+    }
+
+    private Iterable<OrderResponseObject> getAllOrdersOfAServer(EcommerceServer server) {
+        // Do rest call to get all orders of a server
+        String url = "http://" + server.getHostname() + ":" + server.getPort() + "/api/server/getAllOrders";
+        OrderResponseWrapperObject responseWrapperObject = restTemplate.getForObject(url, OrderResponseWrapperObject.class);
+        if (responseWrapperObject != null) {
+            return responseWrapperObject.getOrders();
+        }
+
+        return new ArrayList<>();
+    }
+
+    private Boolean addOrdersToServer(EcommerceServer server, Iterable<OrderResponseObject> orders) {
+        coordinatorLogger.info("Adding all missing orders to " + server.getServerName());
+        // Do rest call to add orders
+        String url = "http://" + server.getHostname() + ":" + server.getPort() + "/api/server/addAllOrders";
+        return Boolean.TRUE.equals(restTemplate.postForObject(url, orders, Boolean.class));
+    }
+
+    private void perform2PCPopulationOfNewlyAddedServer(EcommerceServer server) {
         if (perform2PCPrepStage(server)) {
             if (perform2PCCommitStage(server)) {
                 coordinatorLogger.info("Successfully populated server " + server.getServerName() + " with products.");
@@ -99,7 +153,6 @@ public class Coordinator implements CoordinatorInterface {
         } else {
             coordinatorLogger.severe("Failed to populate server " + server.getServerName() + " with products.");
         }
-        this.servers.add(Map.entry(hostName, port));
     }
 
     private synchronized boolean perform2PCPrepStage(EcommerceServer server) {
@@ -273,10 +326,10 @@ public class Coordinator implements CoordinatorInterface {
 
     @NotNull
     private Result getProductsFromAllServers(List<EcommerceServer> acceptors, int half) {
-        Map<Iterable<Product>, Integer> valueMap = new HashMap<>();
+        Map<Iterable<ProductResponseObject>, Integer> valueMap = new HashMap<>();
         for (EcommerceServer acceptor : acceptors) {
             String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/products";
-            Iterable<Product> products = restTemplate.getForObject(url, Iterable.class);
+            Iterable<ProductResponseObject> products = restTemplate.getForObject(url, Iterable.class);
             if (products != null) {
                 coordinatorLogger.info("Response received from - "
                         + acceptor.getHostname() + ":" + acceptor.getPort());
@@ -285,7 +338,7 @@ public class Coordinator implements CoordinatorInterface {
             }
         }
 
-        for (Iterable<Product> value : valueMap.keySet()) {
+        for (Iterable<ProductResponseObject> value : valueMap.keySet()) {
             if (valueMap.get(value) >= half) {
                 Result result = new Result();
                 result.setOk(true);
@@ -302,10 +355,10 @@ public class Coordinator implements CoordinatorInterface {
 
     @NotNull
     private Result getOrdersFromAllServers(List<EcommerceServer> acceptors, int half) {
-        Map<Iterable<Order>, Integer> valueMap = new HashMap<>();
+        Map<Iterable<OrderResponseObject>, Integer> valueMap = new HashMap<>();
         for (EcommerceServer acceptor : acceptors) {
             String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders";
-            Iterable<Order> orders = restTemplate.getForObject(url, Iterable.class);
+            Iterable<OrderResponseObject> orders = restTemplate.getForObject(url, Iterable.class);
             if (orders != null) {
                 coordinatorLogger.info("Response received from - "
                         + acceptor.getHostname() + ":" + acceptor.getPort());
@@ -314,7 +367,7 @@ public class Coordinator implements CoordinatorInterface {
             }
         }
 
-        for (Iterable<Order> value : valueMap.keySet()) {
+        for (Iterable<OrderResponseObject> value : valueMap.keySet()) {
             if (valueMap.get(value) >= half) {
                 Result result = new Result();
                 result.setOk(true);

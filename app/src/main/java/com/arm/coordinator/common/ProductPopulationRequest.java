@@ -1,19 +1,17 @@
-package com.arm.coordinator.model;
-
-import com.arm.ecommerce.model.Product;
+package com.arm.coordinator.common;
 
 public class ProductPopulationRequest {
 
-    private final Iterable<Product> products;
+    private final Iterable<ProductResponseObject> products;
 
     private final String commitKey;
 
-    public ProductPopulationRequest(Iterable<Product> products, String commitKey) {
+    public ProductPopulationRequest(Iterable<ProductResponseObject> products, String commitKey) {
         this.products = products;
         this.commitKey = commitKey;
     }
 
-    public Iterable<Product> getProducts() {
+    public Iterable<ProductResponseObject> getProducts() {
         return products;
     }
 

@@ -1,9 +1,9 @@
 package com.arm.coordinator.controller;
 
+import com.arm.coordinator.common.OrderResponseObject;
+import com.arm.coordinator.common.ProductResponseObject;
 import com.arm.coordinator.model.OrderForm;
 import com.arm.coordinator.service.CoordinatorService;
-import com.arm.ecommerce.model.Order;
-import com.arm.ecommerce.model.Product;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,16 +28,18 @@ public class CoordinatorController {
 
     @GetMapping("/orders")
     @ResponseStatus(HttpStatus.OK)
-    public @NotNull Iterable<Order> getAllOrders() {
+    public @NotNull Iterable<OrderResponseObject> getAllOrders() {
         return coordinatorService.getAllOrders();
     }
 
     @PostMapping("/orders")
-    public ResponseEntity<Order> createOrder(@RequestBody OrderForm form) {
+    public ResponseEntity<OrderResponseObject> createOrder(@RequestBody OrderForm form) {
         return coordinatorService.createOrder(form);
     }
 
-    @GetMapping(value = { "", "/products" })
-    public @NotNull Iterable<Product> getProducts() { return coordinatorService.getAllProducts(); }
+    @GetMapping(value = {"", "/products"})
+    public @NotNull Iterable<ProductResponseObject> getProducts() {
+        return coordinatorService.getAllProducts();
+    }
 
 }
