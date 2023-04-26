@@ -105,7 +105,7 @@ public class Coordinator implements CoordinatorInterface {
         populateAcceptorsList(acceptors);
 
         Set<OrderResponseObject> availableOrders = new HashSet<>();
-        List<Long> missedOrdersIds = new ArrayList<>();
+        Set<OrderResponseObject> missedOrdersIds = new HashSet<>();
         for (OrderResponseObject order : getAllOrdersOfAServer(newlyAddedServer)) {
             availableOrders.add(order);
         }
@@ -114,7 +114,7 @@ public class Coordinator implements CoordinatorInterface {
             Iterable<OrderResponseObject> newOrders = getAllOrdersOfAServer(acceptor);
             for (OrderResponseObject order : newOrders) {
                 if (!availableOrders.contains(order)) {
-                    missedOrdersIds.add(order.getId());
+                    missedOrdersIds.add(order);
                     coordinatorLogger.warning("Order #" + order.getId() + " not present on " + newlyAddedServer.getServerName());
                 }
             }
@@ -126,7 +126,7 @@ public class Coordinator implements CoordinatorInterface {
             return addOrdersToServer(newlyAddedServer,
                     missedOrdersIds
                             .stream()
-                            .map(id -> completedOrderForms.get(id)).collect(Collectors.toList()));
+                            .map(id -> completedOrderForms.get(id.getId())).collect(Collectors.toList()));
         }
 
     }
@@ -304,7 +304,7 @@ public class Coordinator implements CoordinatorInterface {
                 if (resultResponseEntity.getStatusCode().is2xxSuccessful()) {
                     result = new Result();
                     result.setOk(true);
-                    completedOrderForms.put(proposal.getId(), proposal.getOperation().getOrderForm());
+                    completedOrderForms.put(proposal.getOperation().getOrderForm().getOrderId(), proposal.getOperation().getOrderForm());
 //                            result.setOrder(resultResponseEntity.getBody());
                 }
 
