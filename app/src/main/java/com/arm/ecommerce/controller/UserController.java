@@ -20,6 +20,7 @@ public class UserController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public @NotNull ResponseEntity<EcommerceUser> login(@RequestParam String username, @RequestParam String password) {
+        System.out.println(username + "-" + password);
         for(EcommerceUser u :this.userService.getAllUsers()) {
             if (u.getPassword().equals(password) && u.getUsername().equals(username)) {
                 return new ResponseEntity<>(u, null, HttpStatus.OK);
@@ -31,6 +32,11 @@ public class UserController {
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<EcommerceUser> signup(@RequestBody EcommerceUser ecommerceUser) {
+        for(EcommerceUser u :this.userService.getAllUsers()) {
+            if (u.getUsername().equals(ecommerceUser.getUsername())) {
+                return new ResponseEntity<>(null, null, HttpStatus.FORBIDDEN);
+            }
+        }
         return new ResponseEntity<>(this.userService.signup(ecommerceUser), null, HttpStatus.CREATED);
     }
 }

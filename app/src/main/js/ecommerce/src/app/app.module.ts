@@ -12,10 +12,12 @@ import {EcommerceService} from "./ecommerce/services/EcommerceService";
 import {DisplayOrdersComponent} from "./ecommerce/display-orders/display-orders.component";
 import {RouterModule, Routes} from "@angular/router";
 import {NavbarComponent} from "./ecommerce/navbar/navbar.component";
+import {LoginComponent} from "./ecommerce/login/login.component";
 
 const routes: Routes = [
     { path: '', component: EcommerceComponent },
-    { path: 'orders', component: DisplayOrdersComponent }
+    { path: 'orders', component: DisplayOrdersComponent },
+    { path: 'login', component: LoginComponent }
 ];
 
 @NgModule({
@@ -26,7 +28,8 @@ const routes: Routes = [
         ShoppingCartComponent,
         OrdersComponent,
         DisplayOrdersComponent,
-        NavbarComponent
+        NavbarComponent,
+        LoginComponent
     ],
     imports: [
         BrowserModule,
