@@ -1,7 +1,5 @@
 import {Component, OnInit} from '@angular/core';
 import {EcommerceService} from "../services/EcommerceService";
-import {componentRefresh} from "@angular/core/src/render3/instructions";
-import {Observable} from "rxjs";
 import {Router} from "@angular/router";
 
 @Component({
@@ -31,10 +29,10 @@ export class LoginComponent implements OnInit {
             (res) => {
                 if(res == "OK") {
                     this.isLoggedIn = true;
-                    this.router.navigate(['/']).then(r => console.log("redirecting..."));
+                    this.router.navigate(['/']).then(r => console.log("Redirecting to home page..."));
                 } else {
                     this.isLoggedIn = false;
-                    this.message = "login failed";
+                    this.message = "Login Failed";
                 }
             }
         );

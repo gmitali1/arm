@@ -5,6 +5,7 @@ import com.arm.coordinator.service.CoordinatorService;
 import com.arm.ecommerce.model.Order;
 import com.arm.ecommerce.model.Product;
 import jakarta.validation.constraints.NotNull;
+import jakarta.websocket.server.PathParam;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,8 +29,8 @@ public class CoordinatorController {
 
     @GetMapping("/orders")
     @ResponseStatus(HttpStatus.OK)
-    public @NotNull Iterable<Order> getAllOrders() {
-        return coordinatorService.getAllOrders();
+    public @NotNull Iterable<Order> getAllOrders(@PathParam("userId") int userId) {
+        return coordinatorService.getAllOrders(userId);
     }
 
     @PostMapping("/orders")

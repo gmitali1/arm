@@ -46,9 +46,9 @@ public class CoordinatorService {
         coordinatorInterface.addAcceptor(hostName, port);
     }
 
-    public Iterable<Order> getAllOrders() {
+    public Iterable<Order> getAllOrders(int userId) {
         // Do API Call for get all Orders and return all the orders
-        Result ordersResult = coordinatorInterface.getAllOrders();
+        Result ordersResult = coordinatorInterface.getAllOrders(userId);
         if (ordersResult.isOk()) {
             return ordersResult.getOrders();
         } else {

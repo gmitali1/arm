@@ -12,6 +12,8 @@ public class EcommerceOperation {
     private OperationType operationType;
     private OrderForm orderForm;
 
+    private int userId;
+
     public EcommerceOperation() {
 
     }
@@ -20,11 +22,11 @@ public class EcommerceOperation {
      * Constructor for creating Key Value Operation
      *
      * @param operationType the type of operation (put,get or delete)
-
      */
-    public EcommerceOperation(OperationType operationType, OrderForm orderForm) {
+    public EcommerceOperation(OperationType operationType, OrderForm orderForm, int userId) {
         this.operationType = operationType;
         this.orderForm = orderForm;
+        this.userId = userId;
     }
 
     public OrderForm getOrderForm() {
@@ -47,4 +49,13 @@ public class EcommerceOperation {
     public void setOrderForm(OrderForm orderForm) {
         this.orderForm = orderForm;
     }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+
 }

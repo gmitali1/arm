@@ -17,7 +17,7 @@ public interface CoordinatorInterface {
      */
     void addAcceptor(String hostName, int port);
 
-    Result getAllOrders();
+    Result getAllOrders(int userId);
 
     Result getAllProducts();
 

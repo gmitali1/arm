@@ -35,7 +35,7 @@ public interface PaxosServer<T> {
      */
     Result learn(Proposal proposal);
 
-    Iterable<T> findAll();
+    Iterable<T> findAllByUserId(int userId);
 
 
 }

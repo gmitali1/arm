@@ -49,7 +49,7 @@ public class Coordinator implements CoordinatorInterface {
 
         switch (proposal.getOperation().getOperationType()) {
             case GET_ORDERS -> {
-                return getOrdersFromAllServers(acceptors, half);
+                return getOrdersFromAllServers(acceptors, half, proposal.getOperation().getUserId());
             }
 
             case GET_PRODUCTS -> {
@@ -66,22 +66,22 @@ public class Coordinator implements CoordinatorInterface {
     }
 
     @Override
-    public Result getAllOrders() {
-        EcommerceOperation operation = new EcommerceOperation(OperationType.GET_ORDERS, null);
+    public synchronized Result getAllOrders(int userId) {
+        EcommerceOperation operation = new EcommerceOperation(OperationType.GET_ORDERS, null, userId);
         Proposal proposal = Proposal.generateProposal(operation);
         return execute(proposal);
     }
 
     @Override
-    public Result createOrder(OrderForm orderForm) {
-        EcommerceOperation operation = new EcommerceOperation(OperationType.CREATE_ORDER, orderForm);
+    public synchronized Result createOrder(OrderForm orderForm) {
+        EcommerceOperation operation = new EcommerceOperation(OperationType.CREATE_ORDER, orderForm, orderForm.getUserId());
         Proposal proposal = Proposal.generateProposal(operation);
         return execute(proposal);
     }
 
     @Override
-    public Result getAllProducts() {
-        EcommerceOperation operation = new EcommerceOperation(OperationType.GET_PRODUCTS, null);
+    public synchronized Result getAllProducts() {
+        EcommerceOperation operation = new EcommerceOperation(OperationType.GET_PRODUCTS, null, 0);
         Proposal proposal = Proposal.generateProposal(operation);
         return execute(proposal);
     }
@@ -136,7 +136,7 @@ public class Coordinator implements CoordinatorInterface {
         }
     }
 
-    private void populateAcceptorsList(List<EcommerceServer> acceptors) {
+    private synchronized void populateAcceptorsList(List<EcommerceServer> acceptors) {
         for (Map.Entry<String, Integer> server : this.servers) {
             try {
                 String url = "http://" + server.getKey() + ":" + server.getValue() + "/api/server";
@@ -154,7 +154,7 @@ public class Coordinator implements CoordinatorInterface {
     }
 
     @Nullable
-    private Result perform3PhasePAXOSOrderCreation(Proposal proposal, List<EcommerceServer> acceptors, int half) {
+    private synchronized Result perform3PhasePAXOSOrderCreation(Proposal proposal, List<EcommerceServer> acceptors, int half) {
         // Phase 1: Send the Promises
         int promised = performPromisePhase(proposal, acceptors);
 
@@ -183,7 +183,7 @@ public class Coordinator implements CoordinatorInterface {
         return performLearnPhaseAndAnnounceResult(proposal, acceptors, half);
     }
 
-    private int performPromisePhase(Proposal proposal, List<EcommerceServer> acceptors) {
+    private synchronized int performPromisePhase(Proposal proposal, List<EcommerceServer> acceptors) {
         int promised = 0;
         for (EcommerceServer acceptor : acceptors) {
             try {
@@ -195,21 +195,25 @@ public class Coordinator implements CoordinatorInterface {
                 }
 
                 if (promise == null) {
-                    this.coordinatorLogger.info(String.format("Server at Port %d NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
+                    this.coordinatorLogger.info(String.format("Server at Port %d NOT RESPOND proposal %d",
+                            acceptor.getPort(), proposal.getId()));
                 } else if (promise.getStatus() == Status.PROMISED || promise.getStatus() == Status.ACCEPTED) {
                     promised++;
-                    this.coordinatorLogger.info(String.format("Server at port %d PROMISED proposal %d", acceptor.getPort(), proposal.getId()));
+                    this.coordinatorLogger.info(String.format("Server at port %d PROMISED proposal %d",
+                            acceptor.getPort(), proposal.getId()));
                 } else {
-                    this.coordinatorLogger.info(String.format("Server at port %d REJECTED proposal %d", acceptor.getPort(), proposal.getId()));
+                    this.coordinatorLogger.info(String.format("Server at port %d REJECTED proposal %d",
+                            acceptor.getPort(), proposal.getId()));
                 }
             } catch (Exception e) {
-                this.coordinatorLogger.warning(String.format("Server at port %d DID NOT RESPOND proposal %d", acceptor.getPort(), proposal.getId()));
+                this.coordinatorLogger.warning(String.format("Server at port %d DID NOT RESPOND proposal %d",
+                        acceptor.getPort(), proposal.getId()));
             }
         }
         return promised;
     }
 
-    private int performAcceptPhase(Proposal proposal, List<EcommerceServer> acceptors) {
+    private synchronized int performAcceptPhase(Proposal proposal, List<EcommerceServer> acceptors) {
         int accepted = 0;
         for (EcommerceServer acceptor : acceptors) {
             try {
@@ -234,7 +238,7 @@ public class Coordinator implements CoordinatorInterface {
     }
 
     @Nullable
-    private Result performLearnPhaseAndAnnounceResult(Proposal proposal, List<EcommerceServer> acceptors, int half) {
+    private synchronized Result performLearnPhaseAndAnnounceResult(Proposal proposal, List<EcommerceServer> acceptors, int half) {
         int learnt = 0;
         Result executionResult = null;
         for (EcommerceServer acceptor : acceptors) {
@@ -272,7 +276,7 @@ public class Coordinator implements CoordinatorInterface {
     }
 
     @NotNull
-    private Result getProductsFromAllServers(List<EcommerceServer> acceptors, int half) {
+    private synchronized Result getProductsFromAllServers(List<EcommerceServer> acceptors, int half) {
         Map<Iterable<Product>, Integer> valueMap = new HashMap<>();
         for (EcommerceServer acceptor : acceptors) {
             String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/products";
@@ -301,10 +305,10 @@ public class Coordinator implements CoordinatorInterface {
     }
 
     @NotNull
-    private Result getOrdersFromAllServers(List<EcommerceServer> acceptors, int half) {
+    private synchronized Result getOrdersFromAllServers(List<EcommerceServer> acceptors, int half, int userId) {
         Map<Iterable<Order>, Integer> valueMap = new HashMap<>();
         for (EcommerceServer acceptor : acceptors) {
-            String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders";
+            String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders>userId=" + userId;
             Iterable<Order> orders = restTemplate.getForObject(url, Iterable.class);
             if (orders != null) {
                 coordinatorLogger.info("Response received from - "
@@ -330,28 +334,5 @@ public class Coordinator implements CoordinatorInterface {
         return result;
     }
 
-    private static class EcommerceServer {
-
-        private final String hostname;
-        private final int port;
-
-        public EcommerceServer(String hostname, int port) {
-            this.hostname = hostname;
-            this.port = port;
-        }
-
-        public int getPort() {
-            return port;
-        }
-
-        public String getHostname() {
-            return hostname;
-        }
-
-        public String getServerName() {
-            return hostname + ":" + port;
-        }
-
-    }
 }
 
