@@ -53,6 +53,22 @@ export class EcommerceService {
         });
     }
 
+    signup(username : string , password : string) : Promise<string> {
+        console.log("signing up")
+        return new Promise((resolve, reject) => {
+            const params = { username: username, password: password };
+            this.http.post(
+                this.loginUrl,  params
+            ).subscribe((data: HttpResponse<any>) => {
+                resolve("OK");
+            }, (error) => {
+                console.log(error);
+                console.log("not ok");
+                reject("NOT_OK");
+            });
+        });
+    }
+
     set SelectedProductOrder(value: ProductOrder) {
         this.productOrder = value;
         this.productOrderSubject.next();
