@@ -29,6 +29,8 @@ public class Coordinator implements CoordinatorInterface {
 
     private final List<Product> productList;
 
+    private String productPopulationKey;
+
     /**
      * Constructor to create coordinator with a set of servers.
      */
@@ -104,10 +106,11 @@ public class Coordinator implements CoordinatorInterface {
         try {
             coordinatorLogger.info("Sending Prepare message to " + server.getServerName());
             // Perform Is Server Ready Rest Call
-            String url = "http://" + server.getHostname() + ":" + server.getPort() + "/api/server";
+            String url = "http://" + server.getHostname() + ":" + server.getPort() + "/api/products/prep";
             ResponseEntity<String> serverResponse = restTemplate.getForEntity(url, String.class);
             if (serverResponse.getStatusCode().is2xxSuccessful()) {
                 this.coordinatorLogger.info(String.format("Server at port %d Responded", server.getPort()));
+                this.productPopulationKey = serverResponse.getBody();
                 return true;
             } else {
                 this.coordinatorLogger.warning(String.format("Server at port %d down", server.getPort()));
@@ -123,8 +126,10 @@ public class Coordinator implements CoordinatorInterface {
         try {
             coordinatorLogger.info("Executing Product Population operation on " + server.getServerName());
             // Perform Product List Population Rest Request
-            String url = "http://" + server.getHostname() + ":" + server.getPort() + "/api/products";
-            return Boolean.TRUE.equals(restTemplate.postForObject(url, productList, Boolean.class));
+            String url = "http://" + server.getHostname() + ":" + server.getPort() + "/api/products/commit";
+            return Boolean.TRUE.equals(
+                    restTemplate.postForObject(url, new ProductPopulationRequest(productList, productPopulationKey),
+                            Boolean.class));
         } catch (Exception e) {
             coordinatorLogger.info(server.getServerName() + " is down during commit");
             return false;
