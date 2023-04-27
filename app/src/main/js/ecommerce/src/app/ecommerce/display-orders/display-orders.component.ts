@@ -16,6 +16,7 @@ export class DisplayOrdersComponent implements OnInit{
 
     ngOnInit(): void {
         this.ecommerceService.getAllOrders().subscribe( (orders_ : any[]) => {
+            console.log("ayo")
             orders_.forEach(ord => {
                 this.orders.push(new Order(
                     ord.id,
