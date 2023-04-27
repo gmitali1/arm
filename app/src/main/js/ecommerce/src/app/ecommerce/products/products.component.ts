@@ -4,6 +4,7 @@ import {EcommerceService} from "../services/EcommerceService";
 import {Subscription} from "rxjs/internal/Subscription";
 import {ProductOrders} from "../models/product-orders.model";
 import {Product} from "../models/product.model";
+import {Router} from "@angular/router";
 
 @Component({
     selector: 'app-products',
@@ -18,7 +19,7 @@ export class ProductsComponent implements OnInit {
     sub: Subscription;
     productSelected: boolean = false;
 
-    constructor(private ecommerceService: EcommerceService) {
+    constructor(private ecommerceService: EcommerceService, private router: Router) {
     }
 
     ngOnInit() {
@@ -62,7 +63,10 @@ export class ProductsComponent implements OnInit {
                         this.productOrders.push(new ProductOrder(product, 0));
                     })
                 },
-                (error) => console.log(error)
+                (error) => {
+                    console.log(error)
+                    this.router.navigate(['/login'])
+                }
             );
     }
 
