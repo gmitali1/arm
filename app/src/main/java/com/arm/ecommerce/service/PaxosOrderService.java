@@ -149,7 +149,6 @@ public class PaxosOrderService implements PaxosServer<Order> {
             validateProductsExistence(formDtos);
             Order order = new Order();
             order.setStatus(OrderStatus.PAID.name());
-            order.setId(orderForm.getOrderId());
             order = this.orderService.create(order);
 
             List<OrderProduct> orderProducts = new ArrayList<>();

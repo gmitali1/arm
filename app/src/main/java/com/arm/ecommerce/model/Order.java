@@ -21,6 +21,7 @@ public class Order {
      * The id of the order.
      */
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /**
