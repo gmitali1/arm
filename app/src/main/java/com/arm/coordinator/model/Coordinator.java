@@ -59,10 +59,10 @@ public class Coordinator implements CoordinatorInterface {
         // Check the operation type and perform the necessary action
         switch (proposal.getOperation().getOperationType()) {
             case GET_ORDERS -> {
-                return getOrdersFromAllServers(acceptors, half, userId);
+                return getOrdersFromAllServers(acceptors, userId);
             }
             case GET_PRODUCTS -> {
-                return getProductsFromAllServers(acceptors, half);
+                return getProductsFromAllServers(acceptors);
             }
             case CREATE_ORDER -> {
                 return perform3PhasePAXOSOrderCreation(proposal, acceptors, half, userId);
@@ -92,7 +92,7 @@ public class Coordinator implements CoordinatorInterface {
      * Creates a new order in the system by using 3-phase Paxos protocol for consensus.
      *
      * @param orderForm OrderForm object containing the details of the order to be created
-     * @param userId
+     * @param userId    The unique identifier for the user
      * @return Result object containing the result of the order creation operation
      */
     @Override
@@ -392,28 +392,22 @@ public class Coordinator implements CoordinatorInterface {
     }
 
     @NotNull
-    private Result getProductsFromAllServers(List<EcommerceServer> acceptors, int half) {
-        Map<Iterable<ProductResponseObject>, Integer> valueMap = new HashMap<>();
-        for (EcommerceServer acceptor : acceptors) {
-            String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/products";
-            Iterable<ProductResponseObject> products = restTemplate.getForObject(url, Iterable.class);
-            if (products != null) {
-                coordinatorLogger.info("Response received from - "
-                        + acceptor.getHostname() + ":" + acceptor.getPort());
-                valueMap.put(products,
-                        valueMap.getOrDefault(products, 0) + 1);
-            }
+    private Result getProductsFromAllServers(List<EcommerceServer> acceptors) {
+        Random random = new Random();
+        EcommerceServer acceptor = acceptors.get(random.nextInt(acceptors.size()));
+
+        String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/products";
+        Iterable<ProductResponseObject> products = restTemplate.getForObject(url, Iterable.class);
+        if (products != null) {
+            coordinatorLogger.info("Response received from - "
+                    + acceptor.getHostname() + ":" + acceptor.getPort());
+            Result result = new Result();
+            result.setOk(true);
+            result.setMessage("Products retrieved from distributed servers");
+            result.setProducts(products);
+            return result;
         }
 
-        for (Iterable<ProductResponseObject> value : valueMap.keySet()) {
-            if (valueMap.get(value) >= half) {
-                Result result = new Result();
-                result.setOk(true);
-                result.setMessage("Products retrieved from distributed servers: " + value);
-                result.setProducts(value);
-                return result;
-            }
-        }
         Result result = new Result();
         result.setResultCodeEnum(ResultCodeEnum.KEY_NOT_FOUND);
         result.setMessage(Response.ERROR.getMessage());
@@ -421,7 +415,7 @@ public class Coordinator implements CoordinatorInterface {
     }
 
     @NotNull
-    private Result getOrdersFromAllServers(List<EcommerceServer> acceptors, int half, Integer userId) {
+    private Result getOrdersFromAllServers(List<EcommerceServer> acceptors, Integer userId) {
         Random random = new Random();
         EcommerceServer acceptor = acceptors.get(random.nextInt(acceptors.size()));
 
