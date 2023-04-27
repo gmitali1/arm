@@ -422,26 +422,19 @@ public class Coordinator implements CoordinatorInterface {
 
     @NotNull
     private Result getOrdersFromAllServers(List<EcommerceServer> acceptors, int half, Integer userId) {
-        Map<Iterable<OrderResponseObject>, Integer> valueMap = new HashMap<>();
-        for (EcommerceServer acceptor : acceptors) {
-            String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders?userId=" + userId;
-            Iterable<OrderResponseObject> orders = restTemplate.getForObject(url, Iterable.class);
-            if (orders != null) {
-                coordinatorLogger.info("Response received from - "
-                        + acceptor.getHostname() + ":" + acceptor.getPort());
-                valueMap.put(orders,
-                        valueMap.getOrDefault(orders, 0) + 1);
-            }
-        }
+        Random random = new Random();
+        EcommerceServer acceptor = acceptors.get(random.nextInt(acceptors.size()));
 
-        for (Iterable<OrderResponseObject> value : valueMap.keySet()) {
-            if (valueMap.get(value) >= half) {
-                Result result = new Result();
-                result.setOk(true);
-                result.setMessage("Orders retrieved from distributed servers: " + value);
-                result.setOrders(value);
-                return result;
-            }
+        String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders?userId=" + userId;
+        Iterable<OrderResponseObject> orders = restTemplate.getForObject(url, Iterable.class);
+        if (orders != null) {
+            coordinatorLogger.info("Response received from - "
+                    + acceptor.getHostname() + ":" + acceptor.getPort());
+            Result result = new Result();
+            result.setOk(true);
+            result.setMessage("Orders retrieved from " + acceptor.getServerName() + " distributed servers");
+            result.setOrders(orders);
+            return result;
         }
 
         Result result = new Result();

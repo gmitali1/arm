@@ -13,7 +13,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class CoordinatorService {
@@ -21,15 +20,12 @@ public class CoordinatorService {
     CoordinatorInterface coordinatorInterface;
     RestTemplate restTemplate;
     private final List<ProductResponseObject> productList;
-    private final AtomicLong orderId;
-
 
     public CoordinatorService() {
         productList = new ArrayList<>();
         populateProductList();
         coordinatorInterface = new Coordinator(productList);
         restTemplate = new RestTemplateBuilder().build();
-        orderId = new AtomicLong(1L);
     }
 
     private void populateProductList() {
@@ -58,7 +54,6 @@ public class CoordinatorService {
 
     public synchronized ResponseEntity<OrderResponseObject> createOrder(OrderForm form, Integer userId) {
         // Execute create Order in the coordinator interface
-        form.setOrderId(orderId.getAndIncrement());
         Result result = coordinatorInterface.createOrder(form, userId);
         if (result.isOk()) {
             return ResponseEntity.ok(new OrderResponseObject());
