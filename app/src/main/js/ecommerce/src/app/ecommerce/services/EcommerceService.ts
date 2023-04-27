@@ -32,11 +32,14 @@ export class EcommerceService {
     }
 
     getAllOrders() {
-        return this.http.get(this.ordersUrl);
+        const userId = localStorage.getItem('userId');
+        console.log('User id of the logged in user is ' + userId)
+        return this.http.get(this.ordersUrl + '?userId=' + userId);
     }
 
     saveOrder(order: ProductOrders) {
-        return this.http.post(this.ordersUrl, order);
+        const userId = localStorage.getItem('userId');
+        return this.http.post(this.ordersUrl + '?userId=' + userId, order);
     }
 
     login(username : string , password : string) : Promise<string> {
@@ -46,6 +49,8 @@ export class EcommerceService {
                 this.loginUrl, { params }
             ).subscribe((data: HttpResponse<any>) => {
                 resolve("OK");
+                console.log('User id = ' + data['id']);
+                localStorage.setItem('userId', data['id']);
             }, (error) => {
                 reject("NOT_OK");
             });

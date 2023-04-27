@@ -303,7 +303,7 @@ public class Coordinator implements CoordinatorInterface {
     private synchronized Result getOrdersFromAllServers(List<EcommerceServer> acceptors, int half, int userId) {
         Map<Iterable<Order>, Integer> valueMap = new HashMap<>();
         for (EcommerceServer acceptor : acceptors) {
-            String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders>userId=" + userId;
+            String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders?userId=" + userId;
             Iterable<Order> orders = restTemplate.getForObject(url, Iterable.class);
             if (orders != null) {
                 coordinatorLogger.info("Response received from - "

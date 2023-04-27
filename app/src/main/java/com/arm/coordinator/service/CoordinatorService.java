@@ -56,9 +56,10 @@ public class CoordinatorService {
         }
     }
 
-    public synchronized ResponseEntity<Order> createOrder(OrderForm form) {
+    public synchronized ResponseEntity<Order> createOrder(OrderForm form, int userId) {
         // Execute create Order in the coordinator interface
         form.setOrderId(orderId.getAndIncrement());
+        form.setUserId(userId);
         Result result = coordinatorInterface.createOrder(form);
         if (result.isOk()) {
             return ResponseEntity.ok(new Order());

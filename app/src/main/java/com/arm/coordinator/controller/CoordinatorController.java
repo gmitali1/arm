@@ -34,8 +34,8 @@ public class CoordinatorController {
     }
 
     @PostMapping("/orders")
-    public ResponseEntity<Order> createOrder(@RequestBody OrderForm form) {
-        return coordinatorService.createOrder(form);
+    public ResponseEntity<Order> createOrder(@RequestBody OrderForm form, @PathParam("userId") int userId) {
+        return coordinatorService.createOrder(form, userId);
     }
 
     @GetMapping(value = { "", "/products" })
