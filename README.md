@@ -13,8 +13,8 @@ The execution order of all this project shall be
 3. Start the frontend.
 
 ### Steps to run from command line
-1. Start the coordinator instance using - java -jar coordinator.jar -Dserver.port=8080 -Dserver.host=localhost
-2. Start the required app instance using - java -jar server.jar -Dserver.port=9090 -Dserver.host=localhost -Dcoordinator.host=localhost -Dcoordinatorport=8080
+1. Start the coordinator instance using - java -Dserver.port=8080 -Dserver.host=localhost -jar coordinator.jar 
+2. Start the required app instance using - java -Dserver.port=9090 -Dserver.host=localhost -Dcoordinator.host=localhost -Dcoordinatorport=8080 -jar server.jar
    *Note : The server port numbers (8080 and 9090 in this case) can be replaced by any other port numbers*
 3. Start up the frontend
    1. Navigate to the /src/main/js directory
