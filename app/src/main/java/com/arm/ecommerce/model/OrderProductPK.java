@@ -9,6 +9,9 @@ import jakarta.persistence.ManyToOne;
 import java.io.Serializable;
 import java.util.Objects;
 
+/**
+ * Embeddable class representing the primary key of the OrderProduct entity.
+ */
 @Embeddable
 public class OrderProductPK implements Serializable {
 
@@ -21,18 +24,38 @@ public class OrderProductPK implements Serializable {
     @JoinColumn(name = "product_id")
     private Product product;
 
+    /**
+     * Get the order associated with this OrderProductPK.
+     *
+     * @return The order associated with this OrderProductPK.
+     */
     public Order getOrder() {
         return order;
     }
 
+    /**
+     * Set the order associated with this OrderProductPK.
+     *
+     * @param order The order to associate with this OrderProductPK.
+     */
     public void setOrder(Order order) {
         this.order = order;
     }
 
+    /**
+     * Get the product associated with this OrderProductPK.
+     *
+     * @return The product associated with this OrderProductPK.
+     */
     public Product getProduct() {
         return product;
     }
 
+    /**
+     * Set the product associated with this OrderProductPK.
+     *
+     * @param product The product to associate with this OrderProductPK.
+     */
     public void setProduct(Product product) {
         this.product = product;
     }

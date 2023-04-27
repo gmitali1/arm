@@ -11,11 +11,9 @@ import java.util.*;
 import java.util.logging.Logger;
 
 /**
- * Represents the Coordinator responsible for managing RMI Servers functioning as replicas to store data in the
- * Key Value Store. It performs the function of asynchronously writing data and reading data from the Key Value Store
- * and all of its replicas using consensus.
- *
- * @author mitali ghotgalkar
+ * The Coordinator class implements the CoordinatorInterface and represents the coordinator of a distributed ecommerce system.
+ * It is responsible for handling all the incoming requests from clients and coordinating the communication between the servers
+ * to ensure consistency in data.
  */
 public class Coordinator implements CoordinatorInterface {
 
@@ -31,7 +29,10 @@ public class Coordinator implements CoordinatorInterface {
 
 
     /**
-     * Constructor to create coordinator with a set of servers.
+     * Constructor to create a new Coordinator instance with a given list of products.
+     * Initializes the servers set and the RestTemplate instance.
+     *
+     * @param productList List of all available products in the system
      */
     public Coordinator(List<ProductResponseObject> productList) {
         this.servers = new HashSet<>();
@@ -39,40 +40,62 @@ public class Coordinator implements CoordinatorInterface {
         this.productList = productList;
     }
 
+    /**
+     * Executes the given proposal by communicating with the acceptors and performing the necessary operations.
+     * Uses the 3-phase Paxos protocol for order creation and the 2-phase commit protocol for other operations.
+     *
+     * @param proposal Proposal to be executed
+     * @return Result object containing the result of the executed operation
+     */
     private synchronized Result execute(Proposal proposal) {
+        // Create a list of all available acceptors in the system
         List<EcommerceServer> acceptors = new ArrayList<>();
-
         populateAcceptorsList(acceptors);
 
+        // Calculate the majority of acceptors needed for consensus
         int half = Math.floorDiv(acceptors.size(), 2) + 1;
 
+        // Check the operation type and perform the necessary action
         switch (proposal.getOperation().getOperationType()) {
             case GET_ORDERS -> {
                 return getOrdersFromAllServers(acceptors, half);
             }
-
             case GET_PRODUCTS -> {
                 return getProductsFromAllServers(acceptors, half);
             }
-
             case CREATE_ORDER -> {
                 return perform3PhasePAXOSOrderCreation(proposal, acceptors, half);
             }
-
         }
 
+        // Throw an exception if the operation type is not supported
         throw new IllegalArgumentException("Unsupported Operation Provided in Proposal, cannot proceed further");
     }
 
+    /**
+     * Returns all orders from all servers in the system by using 2-phase commit protocol for consensus.
+     *
+     * @return Result object containing the list of all orders in the system
+     */
     @Override
     public Result getAllOrders() {
+        // Create a new operation for getting all orders and generate a proposal for it
         EcommerceOperation operation = new EcommerceOperation(OperationType.GET_ORDERS, null);
         Proposal proposal = Proposal.generateProposal(operation);
+
+        // Execute the proposal and return the result
         return execute(proposal);
     }
 
+    /**
+     * Creates a new order in the system by using 3-phase Paxos protocol for consensus.
+     *
+     * @param orderForm OrderForm object containing the details of the order to be created
+     * @return Result object containing the result of the order creation operation
+     */
     @Override
     public Result createOrder(OrderForm orderForm) {
+        // Create a new operation for creating the order and generate a proposal for it
         EcommerceOperation operation = new EcommerceOperation(OperationType.CREATE_ORDER, orderForm);
         Proposal proposal = Proposal.generateProposal(operation);
         return execute(proposal);
@@ -189,6 +212,11 @@ public class Coordinator implements CoordinatorInterface {
         }
     }
 
+    /**
+     * Populates the list of acceptors with the servers that are currently up and running.
+     *
+     * @param acceptors an empty list of EcommerceServer objects to be populated with the active servers.
+     */
     private void populateAcceptorsList(List<EcommerceServer> acceptors) {
         for (Map.Entry<String, Integer> server : this.servers) {
             try {
@@ -206,6 +234,15 @@ public class Coordinator implements CoordinatorInterface {
         }
     }
 
+    /**
+     * Performs the 3-phase PAXOS protocol for order creation, using the given proposal and list of acceptors.
+     *
+     * @param proposal  the proposal for the order creation
+     * @param acceptors the list of acceptors participating in the protocol
+     * @param half      the minimum number of acceptors needed for consensus (half of the total acceptors + 1)
+     * @return the result of the protocol execution, including the order details if consensus was reached,
+     * or an error message if consensus was not reached
+     */
     @Nullable
     private Result perform3PhasePAXOSOrderCreation(Proposal proposal, List<EcommerceServer> acceptors, int half) {
         // Phase 1: Send the Promises
@@ -236,6 +273,15 @@ public class Coordinator implements CoordinatorInterface {
         return performLearnPhaseAndAnnounceResult(proposal, acceptors, half);
     }
 
+    /**
+     * This method performs the promise phase of the Paxos consensus algorithm.
+     * It sends a proposal to all acceptors and waits for their promise or rejection responses.
+     * If an acceptor promises or accepts the proposal, the method increments the promised count.
+     *
+     * @param proposal  the proposal to send to the acceptors
+     * @param acceptors the list of acceptors to send the proposal to
+     * @return the number of acceptors that promised or accepted the proposal
+     */
     private int performPromisePhase(Proposal proposal, List<EcommerceServer> acceptors) {
         int promised = 0;
         for (EcommerceServer acceptor : acceptors) {
@@ -262,6 +308,14 @@ public class Coordinator implements CoordinatorInterface {
         return promised;
     }
 
+    /**
+     * Executes the 'accept' phase of the Two-Phase Commit protocol for a given proposal with the list of acceptors.
+     * Sends an accept request to each acceptor with the given proposal and counts the number of accepted responses.
+     *
+     * @param proposal  The proposal to be accepted.
+     * @param acceptors The list of acceptors to whom the accept request is sent.
+     * @return The number of accepted responses.
+     */
     private int performAcceptPhase(Proposal proposal, List<EcommerceServer> acceptors) {
         int accepted = 0;
         for (EcommerceServer acceptor : acceptors) {
@@ -286,6 +340,15 @@ public class Coordinator implements CoordinatorInterface {
         return accepted;
     }
 
+
+    /**
+     * Performs the 'learn' phase and announces the result of the consensus.
+     *
+     * @param proposal  the proposed order to be learned
+     * @param acceptors the list of acceptor servers
+     * @param half      the quorum size needed for consensus
+     * @return the result of the execution if consensus is reached, or a {@code null} value otherwise
+     */
     @Nullable
     private Result performLearnPhaseAndAnnounceResult(Proposal proposal, List<EcommerceServer> acceptors, int half) {
         int learnt = 0;

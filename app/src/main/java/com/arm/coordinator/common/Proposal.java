@@ -3,7 +3,7 @@ package com.arm.coordinator.common;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * The Coordinator sends a Proposal to multiple servers to perform a write operation.
+ * Class representing a proposal in the e-commerce system.
  *
  * @author mitali ghotgalkar
  */
@@ -12,61 +12,29 @@ public class Proposal {
     private EcommerceOperation operation;
 
     /**
-     * Constructor for creating a Proposal with id and Key Value operation.
+     * Constructor for creating a Proposal with an id and a Key Value operation.
      *
-     * @param id        id of the proposal.
-     * @param operation operation that is proposed to the server.
+     * @param id        the id of the proposal
+     * @param operation the operation that is proposed to the server
      */
     public Proposal(long id, EcommerceOperation operation) {
         this.id = id;
         this.operation = operation;
     }
 
+    /**
+     * Default constructor for creating a Proposal.
+     */
     public Proposal() {
 
     }
 
     /**
-     * gets the id of proposal
+     * Creates a new proposal with the Key Value operation passed to it and a unique id generated using the current
+     * system time in milliseconds.
      *
-     * @return long id.
-     */
-    public long getId() {
-        return id;
-    }
-
-    /**
-     * Returns the operation
-     *
-     * @return operation
-     */
-    public EcommerceOperation getOperation() {
-        return operation;
-    }
-
-    /**
-     * sets the id of proposal.
-     *
-     * @param id id to be set.
-     */
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    /**
-     * sets the operation of proposal.
-     *
-     * @param operation to be set.
-     */
-    public void setOperation(EcommerceOperation operation) {
-        this.operation = operation;
-    }
-
-    /**
-     * creates a new proposal with the key value operation passed to it.
-     *
-     * @param ecommerceOperation
-     * @return the created proposal.
+     * @param ecommerceOperation the Key Value operation to be proposed
+     * @return the created proposal
      */
     @JsonIgnore
     public static synchronized Proposal generateProposal(EcommerceOperation ecommerceOperation) {
@@ -77,6 +45,42 @@ public class Proposal {
             throw new RuntimeException(e);
         }
         return proposal;
+    }
+
+    /**
+     * Returns the id of the proposal.
+     *
+     * @return the id of the proposal
+     */
+    public long getId() {
+        return id;
+    }
+
+    /**
+     * Sets the id of the proposal.
+     *
+     * @param id the id to be set
+     */
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    /**
+     * Returns the operation proposed in the proposal.
+     *
+     * @return the operation proposed in the proposal
+     */
+    public EcommerceOperation getOperation() {
+        return operation;
+    }
+
+    /**
+     * Sets the operation proposed in the proposal.
+     *
+     * @param operation the operation to be set
+     */
+    public void setOperation(EcommerceOperation operation) {
+        this.operation = operation;
     }
 }
  

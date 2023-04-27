@@ -18,6 +18,9 @@ import java.util.concurrent.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * Implementation of PaxosServer interface for handling Order objects. Implements the Paxos consensus algorithm to ensure that orders are only created once across a distributed system.
+ */
 @Service
 @Transactional
 public class PaxosOrderService implements PaxosServer<Order> {
@@ -34,26 +37,38 @@ public class PaxosOrderService implements PaxosServer<Order> {
 
     OrderProductService orderProductService;
 
+    /**
+     * Constructs a new PaxosOrderService with the given dependencies.
+     *
+     * @param productService      a ProductService instance for handling product operations
+     * @param orderService        an OrderService instance for handling order operations
+     * @param orderProductService an OrderProductService instance for handling order product operations
+     */
     public PaxosOrderService(ProductService productService, OrderService orderService, OrderProductService orderProductService) {
         this.productService = productService;
         this.orderService = orderService;
         this.orderProductService = orderProductService;
     }
 
+    /**
+     * Returns all orders.
+     *
+     * @return an Iterable of all orders
+     */
     @Override
     public Iterable<Order> findAll() {
         return orderService.getAllOrders();
     }
 
+    /**
+     * Generates a Promise for the given proposal. Implements the Paxos consensus algorithm.
+     *
+     * @param proposal a Proposal instance representing the proposed operation
+     * @return a Promise instance
+     */
     @Override
     public Promise promise(Proposal proposal) {
         this.serverLogger.info("Receive a promise message");
-
-//        if (Math.random() <= promiseRandomFailurePercentage) {
-//            this.serverLogger.info("Random failure triggered at promise phase : Proposal ID =
-//            " +proposal.getId()+ ", Operation = " +proposal.getOperation());
-//            return null;
-//        }
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         FutureTask<Promise> future = new FutureTask<>(() -> {
@@ -81,14 +96,15 @@ public class PaxosOrderService implements PaxosServer<Order> {
 
     }
 
+    /**
+     * Accepts the given proposal. Implements the Paxos consensus algorithm.
+     *
+     * @param proposal a Proposal instance representing the proposed operation
+     * @return a Boolean indicating whether the proposal was accepted
+     */
     @Override
     public Boolean accept(Proposal proposal) {
         this.serverLogger.info("Received a accept message");
-
-//        if (Math.random() <= acceptRandomFailurePercentage) {
-//            this.serverLogger.info("Random failure triggered at accept phase : Proposal ID = " +proposal.getId()+ ", Operation = " +proposal.getOperation());
-//            return null;
-//        }
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         FutureTask<Boolean> future = new FutureTask<>(() -> {
@@ -112,14 +128,15 @@ public class PaxosOrderService implements PaxosServer<Order> {
         }
     }
 
+    /**
+     * Learns the given proposal. Implements the Paxos consensus algorithm.
+     *
+     * @param proposal a Proposal instance representing the proposed operation
+     * @return a Result instance representing the result of the operation
+     */
     @Override
     public Result learn(Proposal proposal) {
         this.serverLogger.info("Received a learn message");
-
-//        if (Math.random() <= learnRandomFailurePercentage) {
-//            this.serverLogger.info("Random failure triggered at learn phase : Proposal ID = " +proposal.getId()+ ", Operation = " +proposal.getOperation());
-//            return Result.setResult(ResultCodeEnum.CONSENSUS_NOT_REACHED).message("Consensus not reached for learn phase.");
-//        }
 
         EcommerceOperation operation = proposal.getOperation();
         Result result = null;
@@ -156,6 +173,13 @@ public class PaxosOrderService implements PaxosServer<Order> {
         return result;
     }
 
+    /**
+     * Validates whether each product in a list of OrderProductDto exists in the database by calling the getProduct
+     * method on the productService object.
+     *
+     * @param orderProducts list of OrderProductDto to validate
+     * @throws ResourceNotFoundException if a product in the list is not found in the database
+     */
     private void validateProductsExistence(List<OrderProductDto> orderProducts) {
         List<OrderProductDto> list = orderProducts
                 .stream()
