@@ -1,4 +1,4 @@
-# Distributed E-Commerce Store Implemented using SpringBoot and ReactJS.
+# Distributed E-Commerce Store Implemented using SpringBoot and Angular.
 
 ## Requirements
 1. Java 17 or higher
