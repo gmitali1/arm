@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Controller for managing products in the e-commerce application.
  */
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {

@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 /**
  * This controller handles user-related endpoints for an E-commerce application.
  */
+
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/api/users")
 public class UserController {

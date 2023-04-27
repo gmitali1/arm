@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 /**
  * REST controller for handling orders.
  */
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {

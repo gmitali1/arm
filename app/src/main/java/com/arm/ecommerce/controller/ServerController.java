@@ -20,6 +20,7 @@ import java.util.List;
 /**
  * The {@code ServerController} class represents a REST API controller that handles server-related requests and responses.
  */
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/api/server")
 public class ServerController {
