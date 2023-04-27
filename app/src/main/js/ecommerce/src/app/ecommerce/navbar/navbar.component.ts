@@ -6,7 +6,7 @@ import {Component} from '@angular/core';
     styleUrls: ['./navbar.component.css']
 })
 export class NavbarComponent {
-    private collapsed: boolean;
+    public collapsed: boolean;
     private orderFinished: boolean;
     private productsC: any;
     private shoppingCartC: any;

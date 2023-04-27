@@ -14,6 +14,8 @@ import {RouterModule, Routes} from "@angular/router";
 import {NavbarComponent} from "./ecommerce/navbar/navbar.component";
 import {LoginComponent} from "./ecommerce/login/login.component";
 import {SignupComponent} from "./ecommerce/signup/signup.component";
+import { LocationStrategy, HashLocationStrategy } from '@angular/common'; // <-- import LocationStrategy and HashLocationStrategy
+
 
 const routes: Routes = [
     { path: '', component: EcommerceComponent },
@@ -44,7 +46,9 @@ const routes: Routes = [
     exports: [
         RouterModule
     ],
-    providers: [EcommerceService],
+    providers: [EcommerceService,
+        { provide: LocationStrategy, useClass: HashLocationStrategy }
+    ],
     bootstrap: [AppComponent]
 })
 export class AppModule {

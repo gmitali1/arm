@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, EventEmitter, OnInit, Output} from '@angular/core';
 import {ProductOrders} from "../models/product-orders.model";
 import {Subscription} from "rxjs/internal/Subscription";
 import {EcommerceService} from "../services/EcommerceService";
