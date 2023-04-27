@@ -71,7 +71,11 @@ public class ServerController {
      * @return a response entity indicating success
      */
     @PostMapping(path = "/addAllOrders")
-    public ResponseEntity<Boolean> addAllOrders(@RequestBody Iterable<OrderResponseObject> orders) {
+    public ResponseEntity<Boolean> addAllOrders(@RequestBody List<OrderResponseObject> orders) {
+        // Make sure that all orders are in ascending order of their orders as they will be added on top
+        orders.sort((o1, o2) -> (int) (o1.getId() - o2.getId()));
+
+        // Iterate through each of them and add them to this DB
         for (OrderResponseObject orderResponseObject : orders) {
             Order order = new Order();
             order.setStatus(OrderStatus.PAID.name());
