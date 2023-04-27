@@ -1,8 +1,7 @@
-package com.arm.ecommerce.service;
+package com.arm.coordinator.service;
 
-import com.arm.ecommerce.model.EcommerceUser;
+import com.arm.coordinator.model.EcommerceUser;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 
 /**
@@ -17,7 +16,7 @@ public interface UserService {
      *
      * @return an iterable collection of ecommerce users
      */
-    @NotNull Iterable<EcommerceUser> getAllUsers();
+    EcommerceUser getByUsernameAndPassword(String username, String password);
 
     /**
      * Creates a new ecommerce user.

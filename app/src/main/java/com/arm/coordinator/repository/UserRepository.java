@@ -1,10 +1,13 @@
-package com.arm.ecommerce.repository;
+package com.arm.coordinator.repository;
 
-import com.arm.ecommerce.model.EcommerceUser;
+import com.arm.coordinator.model.EcommerceUser;
 import org.springframework.data.repository.CrudRepository;
 
 /**
  * Provides CRUD operations for {@link EcommerceUser} entity.
  */
 public interface UserRepository extends CrudRepository<EcommerceUser, Long> {
+
+    EcommerceUser getEcommerceUserByUsernameAndPassword(String username, String password);
+
 }

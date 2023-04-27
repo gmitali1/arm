@@ -45,9 +45,10 @@ public class Coordinator implements CoordinatorInterface {
      * Uses the 3-phase Paxos protocol for order creation and the 2-phase commit protocol for other operations.
      *
      * @param proposal Proposal to be executed
+     * @param userId   User ID of the User performing execution
      * @return Result object containing the result of the executed operation
      */
-    private synchronized Result execute(Proposal proposal) {
+    private synchronized Result execute(Proposal proposal, Integer userId) {
         // Create a list of all available acceptors in the system
         List<EcommerceServer> acceptors = new ArrayList<>();
         populateAcceptorsList(acceptors);
@@ -58,13 +59,13 @@ public class Coordinator implements CoordinatorInterface {
         // Check the operation type and perform the necessary action
         switch (proposal.getOperation().getOperationType()) {
             case GET_ORDERS -> {
-                return getOrdersFromAllServers(acceptors, half);
+                return getOrdersFromAllServers(acceptors, half, userId);
             }
             case GET_PRODUCTS -> {
                 return getProductsFromAllServers(acceptors, half);
             }
             case CREATE_ORDER -> {
-                return perform3PhasePAXOSOrderCreation(proposal, acceptors, half);
+                return perform3PhasePAXOSOrderCreation(proposal, acceptors, half, userId);
             }
         }
 
@@ -78,34 +79,35 @@ public class Coordinator implements CoordinatorInterface {
      * @return Result object containing the list of all orders in the system
      */
     @Override
-    public Result getAllOrders() {
+    public Result getAllOrders(Integer userId) {
         // Create a new operation for getting all orders and generate a proposal for it
         EcommerceOperation operation = new EcommerceOperation(OperationType.GET_ORDERS, null);
         Proposal proposal = Proposal.generateProposal(operation);
 
         // Execute the proposal and return the result
-        return execute(proposal);
+        return execute(proposal, userId);
     }
 
     /**
      * Creates a new order in the system by using 3-phase Paxos protocol for consensus.
      *
      * @param orderForm OrderForm object containing the details of the order to be created
+     * @param userId
      * @return Result object containing the result of the order creation operation
      */
     @Override
-    public Result createOrder(OrderForm orderForm) {
+    public Result createOrder(OrderForm orderForm, Integer userId) {
         // Create a new operation for creating the order and generate a proposal for it
         EcommerceOperation operation = new EcommerceOperation(OperationType.CREATE_ORDER, orderForm);
         Proposal proposal = Proposal.generateProposal(operation);
-        return execute(proposal);
+        return execute(proposal, userId);
     }
 
     @Override
-    public Result getAllProducts() {
+    public Result getAllProducts(Integer userId) {
         EcommerceOperation operation = new EcommerceOperation(OperationType.GET_PRODUCTS, null);
         Proposal proposal = Proposal.generateProposal(operation);
-        return execute(proposal);
+        return execute(proposal, userId);
     }
 
     @Override
@@ -240,11 +242,12 @@ public class Coordinator implements CoordinatorInterface {
      * @param proposal  the proposal for the order creation
      * @param acceptors the list of acceptors participating in the protocol
      * @param half      the minimum number of acceptors needed for consensus (half of the total acceptors + 1)
+     * @param userId
      * @return the result of the protocol execution, including the order details if consensus was reached,
      * or an error message if consensus was not reached
      */
     @Nullable
-    private Result perform3PhasePAXOSOrderCreation(Proposal proposal, List<EcommerceServer> acceptors, int half) {
+    private Result perform3PhasePAXOSOrderCreation(Proposal proposal, List<EcommerceServer> acceptors, int half, Integer userId) {
         // Phase 1: Send the Promises
         int promised = performPromisePhase(proposal, acceptors);
 
@@ -270,7 +273,7 @@ public class Coordinator implements CoordinatorInterface {
         }
 
         // Phase 3 - Send the "learn" message (this is extra credit)
-        return performLearnPhaseAndAnnounceResult(proposal, acceptors, half);
+        return performLearnPhaseAndAnnounceResult(proposal, acceptors, half, userId);
     }
 
     /**
@@ -347,16 +350,17 @@ public class Coordinator implements CoordinatorInterface {
      * @param proposal  the proposed order to be learned
      * @param acceptors the list of acceptor servers
      * @param half      the quorum size needed for consensus
+     * @param userId
      * @return the result of the execution if consensus is reached, or a {@code null} value otherwise
      */
     @Nullable
-    private Result performLearnPhaseAndAnnounceResult(Proposal proposal, List<EcommerceServer> acceptors, int half) {
+    private Result performLearnPhaseAndAnnounceResult(Proposal proposal, List<EcommerceServer> acceptors, int half, Integer userId) {
         int learnt = 0;
         Result executionResult = null;
         for (EcommerceServer acceptor : acceptors) {
             try {
                 Result result = null;
-                String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders/learn";
+                String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders/learn?userId=" + userId;
                 ResponseEntity<Object> resultResponseEntity = restTemplate.postForEntity(url, proposal, Object.class);
                 if (resultResponseEntity.getStatusCode().is2xxSuccessful()) {
                     result = new Result();
@@ -417,10 +421,10 @@ public class Coordinator implements CoordinatorInterface {
     }
 
     @NotNull
-    private Result getOrdersFromAllServers(List<EcommerceServer> acceptors, int half) {
+    private Result getOrdersFromAllServers(List<EcommerceServer> acceptors, int half, Integer userId) {
         Map<Iterable<OrderResponseObject>, Integer> valueMap = new HashMap<>();
         for (EcommerceServer acceptor : acceptors) {
-            String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders";
+            String url = "http://" + acceptor.getHostname() + ":" + acceptor.getPort() + "/api/orders?userId=" + userId;
             Iterable<OrderResponseObject> orders = restTemplate.getForObject(url, Iterable.class);
             if (orders != null) {
                 coordinatorLogger.info("Response received from - "

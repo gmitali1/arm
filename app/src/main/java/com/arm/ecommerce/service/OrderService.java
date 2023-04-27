@@ -17,7 +17,7 @@ public interface OrderService {
      *
      * @return An iterable collection of orders.
      */
-    @NotNull Iterable<Order> getAllOrders();
+    @NotNull Iterable<Order> getAllOrders(Integer userId);
 
     /**
      * Creates a new order and validates that it is not null or empty.

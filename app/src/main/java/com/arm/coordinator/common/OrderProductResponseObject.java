@@ -27,6 +27,10 @@ public class OrderProductResponseObject {
         this.product = product;
     }
 
+    public OrderProductResponseObject() {
+
+    }
+
     /**
      * Gets the quantity of the product included in the order.
      *

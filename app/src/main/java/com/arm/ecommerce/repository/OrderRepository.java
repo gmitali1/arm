@@ -7,4 +7,7 @@ import org.springframework.data.repository.CrudRepository;
  * Provides CRUD operations for {@link Order} entity.
  */
 public interface OrderRepository extends CrudRepository<Order, Long> {
+
+    Iterable<Order> getOrdersByUserId(Integer userId);
+
 }

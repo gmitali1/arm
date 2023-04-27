@@ -24,6 +24,8 @@ public class OrderResponseObject implements Serializable {
 
     private Integer numberOfProducts;
 
+    private Integer userId;
+
     public OrderResponseObject() {
     }
 
@@ -39,13 +41,14 @@ public class OrderResponseObject implements Serializable {
      */
     public OrderResponseObject(Long id, LocalDate dateCreated, OrderStatus status,
                                List<OrderProductResponseObject> orderProducts, Double totalOrderPrice,
-                               Integer numberOfProducts) {
+                               Integer numberOfProducts, Integer userId) {
         this.id = id;
         this.dateCreated = dateCreated;
         this.status = status;
         this.orderProducts = orderProducts;
         this.totalOrderPrice = totalOrderPrice;
         this.numberOfProducts = numberOfProducts;
+        this.userId = userId;
     }
 
     /**
@@ -149,6 +152,14 @@ public class OrderResponseObject implements Serializable {
 
     public void setNumberOfProducts(Integer numberOfProducts) {
         this.numberOfProducts = numberOfProducts;
+    }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
     }
 
     @Override

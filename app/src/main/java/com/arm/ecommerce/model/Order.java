@@ -42,6 +42,8 @@ public class Order {
     @Valid
     private List<OrderProduct> orderProducts = new ArrayList<>();
 
+    private Integer userId;
+
     /**
      * Creates a new instance of the Order class.
      */
@@ -135,6 +137,14 @@ public class Order {
      */
     public List<OrderProduct> getOrderProducts() {
         return orderProducts;
+    }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
     }
 
     /**

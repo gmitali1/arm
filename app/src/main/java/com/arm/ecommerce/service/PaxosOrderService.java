@@ -51,13 +51,13 @@ public class PaxosOrderService implements PaxosServer<Order> {
     }
 
     /**
-     * Returns all orders.
+     * Returns all orders of teh specified user.
      *
      * @return an Iterable of all orders
      */
     @Override
-    public Iterable<Order> findAll() {
-        return orderService.getAllOrders();
+    public Iterable<Order> findAll(Integer userId) {
+        return orderService.getAllOrders(userId);
     }
 
     /**
@@ -132,10 +132,11 @@ public class PaxosOrderService implements PaxosServer<Order> {
      * Learns the given proposal. Implements the Paxos consensus algorithm.
      *
      * @param proposal a Proposal instance representing the proposed operation
+     * @param userId
      * @return a Result instance representing the result of the operation
      */
     @Override
-    public Result learn(Proposal proposal) {
+    public Result learn(Proposal proposal, Integer userId) {
         this.serverLogger.info("Received a learn message");
 
         EcommerceOperation operation = proposal.getOperation();
@@ -159,6 +160,7 @@ public class PaxosOrderService implements PaxosServer<Order> {
             }
 
             order.setOrderProducts(orderProducts);
+            order.setUserId(userId);
 
             this.orderService.update(order);
 

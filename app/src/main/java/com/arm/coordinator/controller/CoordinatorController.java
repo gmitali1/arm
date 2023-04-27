@@ -5,6 +5,7 @@ import com.arm.coordinator.common.ProductResponseObject;
 import com.arm.coordinator.model.OrderForm;
 import com.arm.coordinator.service.CoordinatorService;
 import jakarta.validation.constraints.NotNull;
+import jakarta.websocket.server.PathParam;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -53,8 +54,8 @@ public class CoordinatorController {
      */
     @GetMapping("/orders")
     @ResponseStatus(HttpStatus.OK)
-    public @NotNull Iterable<OrderResponseObject> getAllOrders() {
-        return coordinatorService.getAllOrders();
+    public @NotNull Iterable<OrderResponseObject> getAllOrders(@PathParam("userId") Integer userId) {
+        return coordinatorService.getAllOrders(userId);
     }
 
     /**
@@ -64,8 +65,8 @@ public class CoordinatorController {
      * @return A ResponseEntity containing the OrderResponseObject representing the newly created order.
      */
     @PostMapping("/orders")
-    public ResponseEntity<OrderResponseObject> createOrder(@RequestBody OrderForm form) {
-        return coordinatorService.createOrder(form);
+    public ResponseEntity<OrderResponseObject> createOrder(@RequestBody OrderForm form, @PathParam("userId") Integer userId) {
+        return coordinatorService.createOrder(form, userId);
     }
 
     /**
@@ -74,8 +75,8 @@ public class CoordinatorController {
      * @return An Iterable containing all ProductResponseObject instances in the system.
      */
     @GetMapping(value = {"", "/products"})
-    public @NotNull Iterable<ProductResponseObject> getProducts() {
-        return coordinatorService.getAllProducts();
+    public @NotNull Iterable<ProductResponseObject> getProducts(@PathParam("userId") Integer userId) {
+        return coordinatorService.getAllProducts(userId);
     }
 
 }

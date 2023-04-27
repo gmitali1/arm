@@ -1,4 +1,4 @@
-package com.arm.ecommerce.model;
+package com.arm.coordinator.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

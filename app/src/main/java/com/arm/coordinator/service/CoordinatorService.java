@@ -46,9 +46,9 @@ public class CoordinatorService {
         coordinatorInterface.addAcceptor(hostName, port);
     }
 
-    public Iterable<OrderResponseObject> getAllOrders() {
+    public Iterable<OrderResponseObject> getAllOrders(Integer userId) {
         // Do API Call for get all Orders and return all the orders
-        Result ordersResult = coordinatorInterface.getAllOrders();
+        Result ordersResult = coordinatorInterface.getAllOrders(userId);
         if (ordersResult.isOk()) {
             return ordersResult.getOrders();
         } else {
@@ -56,10 +56,10 @@ public class CoordinatorService {
         }
     }
 
-    public synchronized ResponseEntity<OrderResponseObject> createOrder(OrderForm form) {
+    public synchronized ResponseEntity<OrderResponseObject> createOrder(OrderForm form, Integer userId) {
         // Execute create Order in the coordinator interface
         form.setOrderId(orderId.getAndIncrement());
-        Result result = coordinatorInterface.createOrder(form);
+        Result result = coordinatorInterface.createOrder(form, userId);
         if (result.isOk()) {
             return ResponseEntity.ok(new OrderResponseObject());
         }
@@ -67,9 +67,9 @@ public class CoordinatorService {
     }
 
 
-    public Iterable<ProductResponseObject> getAllProducts() {
+    public Iterable<ProductResponseObject> getAllProducts(Integer userId) {
         // Execute Get Operation for all products on all servers
-        Result productResult = coordinatorInterface.getAllProducts();
+        Result productResult = coordinatorInterface.getAllProducts(userId);
         if (productResult.isOk()) {
             return productResult.getProducts();
         } else {
