@@ -31,16 +31,17 @@ public interface PaxosServer<T> {
      * the Coordinator.
      *
      * @param proposal pass a proposal to accept it at the server.
+     * @param userId
      * @return result of the learn stage in boolean format.
      */
-    Result learn(Proposal proposal);
+    Result learn(Proposal proposal, Integer userId);
 
     /**
      * Get all the items of the specified type in the repository.
      *
      * @return all the available items
      */
-    Iterable<T> findAll();
+    Iterable<T> findAll(Integer userId);
 
 
 }

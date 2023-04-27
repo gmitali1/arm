@@ -20,21 +20,22 @@ public interface CoordinatorInterface {
      *
      * @return a Result object containing all orders
      */
-    Result getAllOrders();
+    Result getAllOrders(Integer userId);
 
     /**
      * Returns a Result object containing all products.
      *
      * @return a Result object containing all products
      */
-    Result getAllProducts();
+    Result getAllProducts(Integer userId);
 
     /**
      * Creates an order using the given OrderForm.
      *
      * @param orderForm the OrderForm used to create the order
+     * @param userId
      * @return a Result object indicating whether the order creation was successful
      */
-    Result createOrder(OrderForm orderForm);
+    Result createOrder(OrderForm orderForm, Integer userId);
 }
 

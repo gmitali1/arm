@@ -1,4 +1,4 @@
-package com.arm.ecommerce.dto;
+package com.arm.coordinator.dto;
 
 /**
  * A DTO (Data Transfer Object) representing a user.

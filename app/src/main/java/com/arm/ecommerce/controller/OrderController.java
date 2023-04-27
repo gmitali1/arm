@@ -7,6 +7,7 @@ import com.arm.ecommerce.model.Order;
 import com.arm.ecommerce.service.PaxosOrderService;
 import com.arm.ecommerce.service.PaxosServer;
 import jakarta.validation.constraints.NotNull;
+import jakarta.websocket.server.PathParam;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,8 +40,8 @@ public class OrderController {
      */
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public @NotNull Iterable<Order> list() {
-        return this.paxosOrderService.findAll();
+    public @NotNull Iterable<Order> list(@PathParam("userId") Integer userId) {
+        return this.paxosOrderService.findAll(userId);
     }
 
     /**
@@ -75,8 +76,8 @@ public class OrderController {
      * @throws IllegalStateException if unable to create the order
      */
     @PostMapping(path = "/learn")
-    public ResponseEntity<Result> learnOrder(@RequestBody Proposal proposal) {
-        Result result = paxosOrderService.learn(proposal);
+    public ResponseEntity<Result> learnOrder(@RequestBody Proposal proposal, @PathParam("userId") Integer userId) {
+        Result result = paxosOrderService.learn(proposal, userId);
 
         if (result.isOk()) {
             return ResponseEntity.ok(result);

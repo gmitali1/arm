@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component} from '@angular/core';
 
 @Component({
     selector: 'navbar',
@@ -26,6 +26,11 @@ export class NavbarComponent {
 
     navigateToOrders() {
 
+    }
+
+    performLogout() {
+        localStorage.setItem('userId', undefined)
+        console.log("Logout Successful")
     }
 
 }

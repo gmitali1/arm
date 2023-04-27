@@ -1,7 +1,7 @@
-package com.arm.ecommerce.service;
+package com.arm.coordinator.service;
 
-import com.arm.ecommerce.model.EcommerceUser;
-import com.arm.ecommerce.repository.UserRepository;
+import com.arm.coordinator.model.EcommerceUser;
+import com.arm.coordinator.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,8 +29,8 @@ public class UserServiceImpl implements UserService {
      * @return an {@code Iterable} of {@code EcommerceUser}s
      */
     @Override
-    public Iterable<EcommerceUser> getAllUsers() {
-        return userRepository.findAll();
+    public EcommerceUser getByUsernameAndPassword(String username, String password) {
+        return userRepository.getEcommerceUserByUsernameAndPassword(username, password);
     }
 
     /**
