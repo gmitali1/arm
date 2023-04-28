@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
  * The CoordinatorController class represents the REST controller for coordinating communication between acceptors and
  * clients in a distributed system.
  */
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/api")
 public class CoordinatorController {

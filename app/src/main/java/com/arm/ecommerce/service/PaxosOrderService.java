@@ -67,7 +67,7 @@ public class PaxosOrderService implements PaxosServer<Order> {
      * @return a Promise instance
      */
     @Override
-    public Promise promise(Proposal proposal) {
+    public synchronized Promise promise(Proposal proposal) {
         this.serverLogger.info("Receive a promise message");
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -103,7 +103,7 @@ public class PaxosOrderService implements PaxosServer<Order> {
      * @return a Boolean indicating whether the proposal was accepted
      */
     @Override
-    public Boolean accept(Proposal proposal) {
+    public synchronized Boolean accept(Proposal proposal) {
         this.serverLogger.info("Received a accept message");
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -136,7 +136,7 @@ public class PaxosOrderService implements PaxosServer<Order> {
      * @return a Result instance representing the result of the operation
      */
     @Override
-    public Result learn(Proposal proposal, Integer userId) {
+    public synchronized Result learn(Proposal proposal, Integer userId) {
         this.serverLogger.info("Received a learn message");
 
         EcommerceOperation operation = proposal.getOperation();
