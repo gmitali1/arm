@@ -16,7 +16,9 @@ information about product availability and pricing, no matter which server they 
 
 1. Java 17 or higher
 2. npm 16.13.1 or higher
-3. Docker (only if trying to run docker image)
+3. http-server (installed using `npm install -g http-server` or `brew install http-server`)
+4. Docker (only if trying to run docker image)
+
 
 # Running Instructions
 
@@ -28,14 +30,17 @@ The execution order of all this project shall be
 3. Start the frontend.
 
 ### Steps to run from command line
-1. Start the coordinator instance using - java -Dserver.port=8080 -Dserver.host=localhost -jar coordinator.jar 
-2. Start the required app instance using - java -Dserver.port=9090 -Dserver.host=localhost -Dcoordinator.host=localhost -Dcoordinatorport=8080 -jar server.jar
-   *Note : The server port numbers (8080 and 9090 in this case) can be replaced by any other port numbers*
-3. Start up the frontend
-   1. Navigate to the /src/main/js directory
-   2. Run 'npm install' ton install all dependencies
-   3. After installing all dependencies, start the frontend app using 'npm start'
-   4. Navigate to http://localhost:4200/signup to begin using the app.
+#### Steps to start the coordinator and serverApps
+1. Start the coordinator instance using - `java -Dserver.port=8080 -Dserver.host=localhost -jar coordinator.jar`
+2. Start the serverapp(s) instance(s) using - `java -Dserver.port=9090 -Dserver.host=localhost -Dcoordinator.host=localhost -Dcoordinatorport=8080 -jar server.jar`
+
+Note : The server port numbers (8080 and 9090 in this case) can be replaced by any other port numbers. Change the port number of the serverapp (9090) to start new instances.
+
+#### Steps to start up the frontend.
+1. Unzip frontend.zip. 
+2. Navigate to inside the frontend folder.
+3. Assuming http-server is installed. run `http-server -p 4200`
+4. Navigate to `http://localhost:4200/` to start using the application.
 
 ##  
 
@@ -59,23 +64,29 @@ Here are the instructions to get and run the docker image of our project:
 For the ease of testing we have created a lot of user profiles for each TA and group members. The available profiles are
 as follows:
 
-| Username  | Password   |
-|-----------|------------|
-| anuj      | potdar     |
-| mitali    | ghotgalkar |
-| rushikesh | mokashi    |
+| Username | Password   |
+|----------|------------|
+| anuj     | potdar     |
+| mitali   | ghotgalkar |
+| rush     | mokashi    |
 
 Similarly, we have created users for all the TAs. You can take a look at all the available users in
 the `CoordinatorApplication` class.
 
 ### How to use the application
 
-1. Once you start the frontend, making sure that the Coordinator and the Servers are up, you will be prompted to login.
+1. Once you start the frontend, making sure that the Coordinator and the Servers are up, you will be prompted to login. The respective database instances have been created as soon as server instances are started.
+   ![alt text](./app/media/database.jpeg)
 2. Login using any of the user credentials, each user has its own set of orders and the session is present across all
    tabs.
-3. After signing in, navigate to the home page to see a list of available products
+   ![alt text](./app/media/login.png)
+3. After logging in, navigate to the home page to see a list of available products
 4. Add the required amount of products to your card, click checkout.
+   ![alt text](./app/media/products.png)
 5. After checking out, click pay (don't worry, you won't be charged) to create an order.
+   ![alt text](./app/media/pay.png)
 6. Click on `Orders` to check all your previous orders.
+   ![alt text](./app/media/orders.png)
+
 
 
